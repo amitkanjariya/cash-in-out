@@ -2,6 +2,7 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'otp_screen.dart';
+import 'register_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -16,27 +17,21 @@ class _LoginScreenState extends State<LoginScreen> {
   void goToOTP() {
     final phone = phoneController.text.trim();
 
-    if (phone.isEmpty) {
+    if (phone.isEmpty ||
+        phone.length != 10 ||
+        !RegExp(r'^\d{10}$').hasMatch(phone)) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please enter your phone number')),
+        const SnackBar(content: Text('Enter a valid 10-digit phone number')),
       );
       return;
     }
 
-    if (phone.length != 10 || !RegExp(r'^\d{10}$').hasMatch(phone)) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Phone number must be exactly 10 digits')),
-      );
-      return;
-    }
-
-    // Generate a random 6-digit OTP
-    String generatedOtp = (Random().nextInt(900000) + 100000).toString();
-    OTPScreen.otpMap[phone] = generatedOtp;
+    String otp = (Random().nextInt(900000) + 100000).toString();
+    OTPScreen.otpMap[phone] = otp;
 
     ScaffoldMessenger.of(
       context,
-    ).showSnackBar(SnackBar(content: Text('OTP sent! (Use $generatedOtp)')));
+    ).showSnackBar(SnackBar(content: Text('OTP sent! (Use $otp)')));
 
     Navigator.push(
       context,
@@ -46,86 +41,130 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final height = MediaQuery.of(context).size.height;
+
     return Scaffold(
-      backgroundColor: const Color(0xFFF8F9FA),
-      body: Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const SizedBox(height: 100),
-            const Center(
-              child: Icon(Icons.payment, size: 80, color: Color(0xFF1A73E8)),
-            ),
-            const SizedBox(height: 40),
-            const Text(
-              'Welcome to Cash In-Out',
-              style: TextStyle(
-                fontFamily: 'Poppins',
-                fontSize: 24,
-                fontWeight: FontWeight.w600,
-                color: Color(0xFF202124),
-              ),
-            ),
-            const SizedBox(height: 24),
-            const Text(
-              'Enter your phone number to continue',
-              style: TextStyle(
-                fontFamily: 'Inter',
-                fontSize: 14,
-                color: Color(0xFF5F6368),
-              ),
-            ),
-            const SizedBox(height: 16),
-            TextField(
-              controller: phoneController,
-              keyboardType: TextInputType.phone,
-              inputFormatters: [
-                FilteringTextInputFormatter.digitsOnly,
-                LengthLimitingTextInputFormatter(10),
-              ],
-              decoration: InputDecoration(
-                labelText: 'Phone Number',
-                prefixIcon: const Icon(Icons.phone),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8),
+      backgroundColor: Colors.white,
+      body: SafeArea(
+        child: SizedBox(
+          height: height,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 24),
+            child: Column(
+              children: [
+                const SizedBox(height: 40),
+
+                // Bigger Logo
+                Image.asset(
+                  'assets/images/logo1.png',
+                  height: 130,
+                  errorBuilder:
+                      (context, error, stackTrace) =>
+                          const SizedBox(height: 130),
                 ),
-              ),
-            ),
-            const SizedBox(height: 24),
-            SizedBox(
-              width: double.infinity,
-              height: 48,
-              child: ElevatedButton(
-                onPressed: goToOTP,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF1A73E8),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                ),
-                child: const Text(
-                  'Get OTP',
+
+                const SizedBox(height: 20),
+
+                const Text(
+                  'Welcome to Cash In-Out',
                   style: TextStyle(
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                    fontFamily: 'Poppins',
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+
+                const SizedBox(height: 12),
+
+                const Text(
+                  'Enter your phone number to continue',
+                  style: TextStyle(
+                    fontSize: 15,
+                    color: Colors.black54,
                     fontFamily: 'Inter',
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+
+                const SizedBox(height: 40),
+
+                // Phone Number Field
+                TextField(
+                  controller: phoneController,
+                  keyboardType: TextInputType.phone,
+                  inputFormatters: [
+                    FilteringTextInputFormatter.digitsOnly,
+                    LengthLimitingTextInputFormatter(10),
+                  ],
+                  decoration: InputDecoration(
+                    hintText: 'Phone Number',
+                    prefixIcon: const Icon(Icons.phone),
+                    filled: true,
+                    fillColor: Colors.grey.shade100,
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(14),
+                      borderSide: BorderSide.none,
+                    ),
                   ),
                 ),
-              ),
-            ),
-            const SizedBox(height: 12),
-            const Center(
-              child: Text(
-                'You will receive an OTP to verify your number',
-                style: TextStyle(
-                  fontFamily: 'Inter',
-                  fontSize: 12,
-                  color: Color(0xFF9AA0A6),
+
+                const Spacer(), // Pushes button toward the bottom
+                // Generate OTP Button
+                SizedBox(
+                  width: double.infinity,
+                  height: 50,
+                  child: ElevatedButton.icon(
+                    onPressed: goToOTP,
+                    icon: const Icon(Icons.login),
+                    label: const Text(
+                      'Generate OTP',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF1A73E8),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(30),
+                      ),
+                    ),
+                  ),
                 ),
-              ),
+
+                const SizedBox(height: 20),
+
+                // Register Text
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Text("Don’t have an account yet? "),
+                    GestureDetector(
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (_) => RegisterScreen()),
+                        );
+                      },
+                      child: const Text(
+                        "Register",
+                        style: TextStyle(
+                          color: Colors.blueAccent,
+                          fontWeight: FontWeight.w500,
+                          decoration:
+                              TextDecoration
+                                  .underline, // optional, to show it's clickable
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+
+                const SizedBox(height: 24),
+              ],
             ),
-          ],
+          ),
         ),
       ),
     );
