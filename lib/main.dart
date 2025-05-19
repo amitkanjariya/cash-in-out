@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'screens/homepage.dart';
+import 'screens/login_screen.dart';
 
 void main() {
   runApp(const MyApp());
@@ -13,7 +14,8 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: 'Cash In-Out',
       debugShowCheckedModeBanner: false,
-      home: const HomePage(),
+      // home: const HomePage(),
+      home: const LoginScreen(),
     );
   }
 }

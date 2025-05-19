@@ -106,104 +106,101 @@ class _OTPScreenState extends State<OTPScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final height = MediaQuery.of(context).size.height;
-
     return Scaffold(
       backgroundColor: Colors.white,
+      resizeToAvoidBottomInset: true,
       body: SafeArea(
-        child: SizedBox(
-          height: height,
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 36),
-            child: Column(
-              children: [
-                const SizedBox(height: 40),
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 36),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              const SizedBox(height: 40),
 
-                // Logo
-                Image.asset(
-                  'assets/images/logo1.png',
-                  height: 130,
-                  errorBuilder:
-                      (context, error, stackTrace) =>
-                          const SizedBox(height: 130),
+              // Logo
+              Image.asset(
+                'assets/images/logo1.png',
+                height: 130,
+                errorBuilder: (context, error, stackTrace) =>
+                    const SizedBox(height: 130),
+              ),
+
+              const SizedBox(height: 20),
+
+              const Text(
+                'Verify OTP',
+                style: TextStyle(
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold,
+                  fontFamily: 'Poppins',
                 ),
+                textAlign: TextAlign.center,
+              ),
 
-                const SizedBox(height: 20),
+              const SizedBox(height: 12),
 
-                const Text(
-                  'Verify OTP',
-                  style: TextStyle(
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
-                    fontFamily: 'Poppins',
-                  ),
-                  textAlign: TextAlign.center,
+              const Text(
+                'Enter the 6-digit OTP sent to your number',
+                style: TextStyle(
+                  fontSize: 15,
+                  color: Colors.black54,
+                  fontFamily: 'Inter',
                 ),
+                textAlign: TextAlign.center,
+              ),
 
-                const SizedBox(height: 12),
+              const SizedBox(height: 40),
 
-                const Text(
-                  'Enter the 6-digit OTP sent to your number',
-                  style: TextStyle(
-                    fontSize: 15,
-                    color: Colors.black54,
-                    fontFamily: 'Inter',
-                  ),
-                  textAlign: TextAlign.center,
+              // OTP Input Field with Toggle
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF4F4F4),
+                  borderRadius: BorderRadius.circular(14),
                 ),
-
-                const SizedBox(height: 40),
-
-                // OTP Input Field with Toggle
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 20),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFF4F4F4),
-                    borderRadius: BorderRadius.circular(14),
-                  ),
-                  child: TextField(
-                    keyboardType: TextInputType.number,
-                    maxLength: 6,
-                    obscureText: _obscureOtp,
-                    style: const TextStyle(color: Colors.black),
-                    decoration: InputDecoration(
-                      counterText: "",
-                      hintText: "OTP",
-                      hintStyle: const TextStyle(color: Colors.grey),
-                      prefixIcon: const Icon(
-                        Icons.lock_outline,
+                child: TextField(
+                  keyboardType: TextInputType.number,
+                  maxLength: 6,
+                  obscureText: _obscureOtp,
+                  style: const TextStyle(color: Colors.black),
+                  decoration: InputDecoration(
+                    counterText: "",
+                    hintText: "OTP",
+                    hintStyle: const TextStyle(color: Colors.grey),
+                    prefixIcon: const Icon(
+                      Icons.lock_outline,
+                      color: Colors.grey,
+                    ),
+                    suffixIcon: IconButton(
+                      icon: Icon(
+                        _obscureOtp
+                            ? Icons.visibility_off_outlined
+                            : Icons.visibility_outlined,
                         color: Colors.grey,
                       ),
-                      suffixIcon: IconButton(
-                        icon: Icon(
-                          _obscureOtp
-                              ? Icons.visibility_off_outlined
-                              : Icons.visibility_outlined,
-                          color: Colors.grey,
-                        ),
-                        onPressed: () {
-                          setState(() {
-                            _obscureOtp = !_obscureOtp;
-                          });
-                        },
-                      ),
-                      border: InputBorder.none,
+                      onPressed: () {
+                        setState(() {
+                          _obscureOtp = !_obscureOtp;
+                        });
+                      },
                     ),
-                    onChanged: (value) {
-                      fullOtp = value;
-                      if (value.length == 6) {
-                        for (int i = 0; i < 6; i++) {
-                          otpControllers[i].text = value[i];
-                        }
-                      }
-                    },
+                    border: InputBorder.none,
                   ),
+                  onChanged: (value) {
+                    fullOtp = value;
+                    if (value.length == 6) {
+                      for (int i = 0; i < 6; i++) {
+                        otpControllers[i].text = value[i];
+                      }
+                    }
+                  },
                 ),
+              ),
 
-                const SizedBox(height: 10),
+              const SizedBox(height: 10),
 
-                _expired
-                    ? TextButton(
+              _expired
+                  ? TextButton(
                       onPressed: _resendOTP,
                       child: const Text(
                         "Resend OTP?",
@@ -214,67 +211,69 @@ class _OTPScreenState extends State<OTPScreen> {
                         ),
                       ),
                     )
-                    : Text(
+                  : Text(
                       "Resend code in 00:${_secondsRemaining.toString().padLeft(2, '0')}",
                       style: const TextStyle(
                         fontSize: 12,
                         color: Colors.black54,
                       ),
+                      textAlign: TextAlign.center,
                     ),
 
-                const Spacer(),
+              const SizedBox(height: 32),
 
-                // Login Button
-                SizedBox(
-                  width: double.infinity,
-                  height: 52,
-                  child: ElevatedButton.icon(
-                    onPressed: verifyOTP,
-                    icon: const Icon(Icons.login_rounded),
-                    label: const Text(
-                      "Login",
+              // Login Button
+              SizedBox(
+                width: double.infinity,
+                height: 52,
+                child: ElevatedButton.icon(
+                  onPressed: verifyOTP,
+                  icon: const Icon(Icons.login_rounded),
+                  label: const Text(
+                    "Login",
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  style: ElevatedButton.styleFrom(
+                    elevation: 2,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(32),
+                    ),
+                    backgroundColor: Colors.blue[700],
+                    foregroundColor: Colors.white,
+                  ),
+                ),
+              ),
+
+              const SizedBox(height: 32),
+
+              // Register Text
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Text(
+                    "Don’t have an account yet? ",
+                    style: TextStyle(color: Colors.black),
+                  ),
+                  GestureDetector(
+                    onTap: () {
+                      Navigator.pop(context);
+                    },
+                    child: const Text(
+                      "Register",
                       style: TextStyle(
-                        fontSize: 16,
+                        color: Colors.blueAccent,
                         fontWeight: FontWeight.w600,
                       ),
                     ),
-                    style: ElevatedButton.styleFrom(
-                      elevation: 2,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(32),
-                      ),
-                      backgroundColor: Colors.blue[700],
-                      foregroundColor: Colors.white,
-                    ),
                   ),
-                ),
+                ],
+              ),
 
-                const SizedBox(height: 32),
-
-                // Register Text
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const Text(
-                      "Don’t have an account yet? ",
-                      style: TextStyle(color: Colors.black),
-                    ),
-                    GestureDetector(
-                      onTap: () {
-                        Navigator.pop(context); // or push to register
-                      },
-                      child: const Text(
-                        "Register",
-                        style: TextStyle(
-                          color: Colors.blueAccent,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
+              const SizedBox(height: 32),
+            ],
           ),
         ),
       ),

@@ -13,9 +13,9 @@ class RegisterScreen extends StatelessWidget {
     final email = emailController.text.trim();
 
     if (name.isEmpty) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text("Please enter your name")));
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Please enter your name")),
+      );
       return;
     }
 
@@ -33,9 +33,9 @@ class RegisterScreen extends StatelessWidget {
       return;
     }
 
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(const SnackBar(content: Text("Registered successfully!")));
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text("Registered successfully!")),
+    );
 
     Navigator.pop(context); // Go back to login after registration
   }
@@ -45,7 +45,7 @@ class RegisterScreen extends StatelessWidget {
     return Scaffold(
       backgroundColor: Colors.white,
       body: SafeArea(
-        child: Padding(
+        child: SingleChildScrollView(
           padding: const EdgeInsets.symmetric(horizontal: 28),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.center,
