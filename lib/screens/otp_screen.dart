@@ -121,8 +121,8 @@ class _OTPScreenState extends State<OTPScreen> {
               Image.asset(
                 'assets/images/logo1.png',
                 height: 130,
-                errorBuilder: (context, error, stackTrace) =>
-                    const SizedBox(height: 130),
+                errorBuilder:
+                    (context, error, stackTrace) => const SizedBox(height: 130),
               ),
 
               const SizedBox(height: 20),
@@ -201,24 +201,21 @@ class _OTPScreenState extends State<OTPScreen> {
 
               _expired
                   ? TextButton(
-                      onPressed: _resendOTP,
-                      child: const Text(
-                        "Resend OTP?",
-                        style: TextStyle(
-                          fontWeight: FontWeight.w600,
-                          fontSize: 14,
-                          color: Colors.blue,
-                        ),
+                    onPressed: _resendOTP,
+                    child: const Text(
+                      "Resend OTP?",
+                      style: TextStyle(
+                        fontWeight: FontWeight.w600,
+                        fontSize: 14,
+                        color: Colors.blue,
                       ),
-                    )
-                  : Text(
-                      "Resend code in 00:${_secondsRemaining.toString().padLeft(2, '0')}",
-                      style: const TextStyle(
-                        fontSize: 12,
-                        color: Colors.black54,
-                      ),
-                      textAlign: TextAlign.center,
                     ),
+                  )
+                  : Text(
+                    "Resend code in 00:${_secondsRemaining.toString().padLeft(2, '0')}",
+                    style: const TextStyle(fontSize: 12, color: Colors.black54),
+                    textAlign: TextAlign.center,
+                  ),
 
               const SizedBox(height: 32),
 
@@ -231,10 +228,7 @@ class _OTPScreenState extends State<OTPScreen> {
                   icon: const Icon(Icons.login_rounded),
                   label: const Text(
                     "Login",
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                    ),
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
                   ),
                   style: ElevatedButton.styleFrom(
                     elevation: 2,
