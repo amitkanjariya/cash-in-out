@@ -1,12 +1,14 @@
 import 'dart:async';
 import 'dart:math';
+import 'package:cashinout/utils/constants.dart';
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart'; // ✅ Added import
 import 'homepage.dart';
 
 class OTPScreen extends StatefulWidget {
   final String phone;
   const OTPScreen({super.key, required this.phone});
-
   static final Map<String, String> otpMap = {};
 
   @override
@@ -18,7 +20,6 @@ class _OTPScreenState extends State<OTPScreen> {
     6,
     (_) => TextEditingController(),
   );
-
   late Timer _timer;
   int _secondsRemaining = 30;
   bool _expired = false;
@@ -63,7 +64,7 @@ class _OTPScreenState extends State<OTPScreen> {
     );
   }
 
-  void verifyOTP() {
+  void verifyOTP() async {
     String enteredOtp = fullOtp;
     String? correctOtp = OTPScreen.otpMap[widget.phone];
 
@@ -83,6 +84,13 @@ class _OTPScreenState extends State<OTPScreen> {
 
     if (enteredOtp == correctOtp) {
       OTPScreen.otpMap.remove(widget.phone);
+      await savePhoneNumber(widget.phone);
+
+      // ✅ Save login status and phone using SharedPreferences
+      SharedPreferences prefs = await SharedPreferences.getInstance();
+      await prefs.setBool('isLoggedIn', true);
+      await prefs.setString('phone', widget.phone);
+
       Navigator.pushAndRemoveUntil(
         context,
         MaterialPageRoute(builder: (_) => const HomePage()),
@@ -92,6 +100,24 @@ class _OTPScreenState extends State<OTPScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Invalid OTP. Please try again.')),
       );
+    }
+  }
+
+  Future<void> savePhoneNumber(String phone) async {
+    try {
+      print('Posting to: ${Constants.baseUrl}/login.php');
+      print('Sending phone: $phone');
+      final response = await http.post(
+        Uri.parse('${Constants.baseUrl}/login.php'),
+        body: {'phone': phone},
+      );
+      if (response.statusCode == 200) {
+        print('Phone number saved. ${response.body}');
+      } else {
+        print('Failed to save number. Status: ${response.statusCode}');
+      }
+    } catch (e) {
+      print('Error: $e');
     }
   }
 
@@ -118,18 +144,8 @@ class _OTPScreenState extends State<OTPScreen> {
             child: Column(
               children: [
                 const SizedBox(height: 40),
-
-                // Logo
-                Image.asset(
-                  'assets/images/logo1.png',
-                  height: 130,
-                  errorBuilder:
-                      (context, error, stackTrace) =>
-                          const SizedBox(height: 130),
-                ),
-
+                Image.asset('assets/images/logo1.png', height: 130),
                 const SizedBox(height: 20),
-
                 const Text(
                   'Verify OTP',
                   style: TextStyle(
@@ -137,11 +153,8 @@ class _OTPScreenState extends State<OTPScreen> {
                     fontWeight: FontWeight.bold,
                     fontFamily: 'Poppins',
                   ),
-                  textAlign: TextAlign.center,
                 ),
-
                 const SizedBox(height: 12),
-
                 const Text(
                   'Enter the 6-digit OTP sent to your number',
                   style: TextStyle(
@@ -149,12 +162,8 @@ class _OTPScreenState extends State<OTPScreen> {
                     color: Colors.black54,
                     fontFamily: 'Inter',
                   ),
-                  textAlign: TextAlign.center,
                 ),
-
                 const SizedBox(height: 40),
-
-                // OTP Input Field with Toggle
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 20),
                   decoration: BoxDecoration(
@@ -199,9 +208,7 @@ class _OTPScreenState extends State<OTPScreen> {
                     },
                   ),
                 ),
-
                 const SizedBox(height: 10),
-
                 _expired
                     ? TextButton(
                       onPressed: _resendOTP,
@@ -221,10 +228,7 @@ class _OTPScreenState extends State<OTPScreen> {
                         color: Colors.black54,
                       ),
                     ),
-
                 const Spacer(),
-
-                // Login Button
                 SizedBox(
                   width: double.infinity,
                   height: 52,
@@ -248,10 +252,7 @@ class _OTPScreenState extends State<OTPScreen> {
                     ),
                   ),
                 ),
-
                 const SizedBox(height: 32),
-
-                // Register Text
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
@@ -260,9 +261,7 @@ class _OTPScreenState extends State<OTPScreen> {
                       style: TextStyle(color: Colors.black),
                     ),
                     GestureDetector(
-                      onTap: () {
-                        Navigator.pop(context); // or push to register
-                      },
+                      onTap: () => Navigator.pop(context),
                       child: const Text(
                         "Register",
                         style: TextStyle(

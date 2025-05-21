@@ -2,7 +2,6 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'otp_screen.dart';
-import 'register_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -141,12 +140,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   children: [
                     const Text("Don’t have an account yet? "),
                     GestureDetector(
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(builder: (_) => RegisterScreen()),
-                        );
-                      },
+                      onTap: () {},
                       child: const Text(
                         "Register",
                         style: TextStyle(
