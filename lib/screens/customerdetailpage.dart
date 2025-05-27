@@ -1,3 +1,5 @@
+import 'package:cashinout/screens/you_gave_page.dart';
+import 'package:cashinout/screens/you_got_page.dart';
 import 'package:flutter/material.dart';
 import 'customerprofilepage.dart';
 
@@ -180,7 +182,12 @@ class CustomerDetailPage extends StatelessWidget {
           children: [
             Expanded(
               child: ElevatedButton(
-                onPressed: () {},
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => const YouGavePage()),
+                  );
+                },
                 style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
                 child: const Text('YOU GAVE ₹'),
               ),
@@ -188,7 +195,12 @@ class CustomerDetailPage extends StatelessWidget {
             const SizedBox(width: 12),
             Expanded(
               child: ElevatedButton(
-                onPressed: () {},
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => const YouGotPage()),
+                  );
+                },
                 style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
                 child: const Text('YOU GOT ₹'),
               ),
