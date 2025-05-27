@@ -2,7 +2,7 @@ name: cashinout
 description: "A new Flutter project."
 # The following line prevents the package from being accidentally published to
 # pub.dev using `flutter pub publish`. This is preferred for private packages.
-publish_to: 'none' # Remove this line if you wish to publish to pub.dev
+publish_to: "none" # Remove this line if you wish to publish to pub.dev
 
 # The following defines the version and build number for your application.
 # A version number is three numbers separated by dots, like 1.2.43
@@ -31,6 +31,13 @@ dependencies:
   flutter:
     sdk: flutter
 
+  http: ^0.13.5
+  intl: ^0.18.1
+  pdf: ^3.10.4
+  printing: ^5.10.4
+  share_plus: ^7.2.1
+  path_provider: ^2.1.2
+
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.
   cupertino_icons: ^1.0.8
@@ -51,7 +58,6 @@ dev_dependencies:
 
 # The following section is specific to Flutter packages.
 flutter:
-
   # The following line ensures that the Material Icons font is
   # included with your application, so that you can use the icons in
   # the material Icons class.
@@ -61,6 +67,7 @@ flutter:
   assets:
     - assets/images/logo1.png
     - assets/images/logo2.png
+    - assets/fonts/NotoSans-Regular.ttf
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images
@@ -74,9 +81,9 @@ flutter:
   # list giving the asset and other descriptors for the font. For
   # example:
   # fonts:
-  #   - family: Schyler
-  #     fonts:
-  #       - asset: fonts/Schyler-Regular.ttf
+  #   # - family: Schyler
+  #   fonts:
+  #     - asset: assets/fonts/NotoSans-Regular.ttf
   #       - asset: fonts/Schyler-Italic.ttf
   #         style: italic
   #   - family: Trajan Pro
