@@ -676,7 +676,7 @@ class _ReportPageState extends State<ReportPage> {
       body: Column(
         children: [
           Container(
-            color: Colors.blue[800],
+            color: Colors.blue[801],
             padding: const EdgeInsets.all(16),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
