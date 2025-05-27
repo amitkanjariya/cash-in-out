@@ -1,13 +1,13 @@
+import 'dart:convert';
+import 'package:cashinout/models/transaction_model.dart';
+import 'package:cashinout/utils/constants.dart';
 import 'package:flutter/material.dart';
-import 'customerdetailpage.dart'; // your customer detail page
-import 'morepage.dart'; // your more page
-import 'reportpage.dart'; // new report page
-
-void main() {
-  runApp(
-    const MaterialApp(home: HomePage(), debugShowCheckedModeBanner: false),
-  );
-}
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:http/http.dart' as http;
+import 'customerdetailpage.dart';
+import 'morepage.dart';
+import 'reportpage.dart';
+import 'addcustomer_page.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -31,11 +31,7 @@ class _HomePageState extends State<HomePage> {
       body: _pages[_currentIndex],
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _currentIndex,
-        onTap: (index) {
-          setState(() {
-            _currentIndex = index;
-          });
-        },
+        onTap: (index) => setState(() => _currentIndex = index),
         items: const [
           BottomNavigationBarItem(icon: Icon(Icons.home), label: 'HOME'),
           BottomNavigationBarItem(
@@ -51,8 +47,149 @@ class _HomePageState extends State<HomePage> {
   }
 }
 
-class CustomerListPage extends StatelessWidget {
+class CustomerListPage extends StatefulWidget {
   const CustomerListPage({super.key});
+
+  @override
+  State<CustomerListPage> createState() => _CustomerListPageState();
+}
+
+class _CustomerListPageState extends State<CustomerListPage> {
+  List<TransactionModel> transactions = [];
+  bool isLoading = true;
+  String userPhone = '';
+  String userId = '';
+  double totalGive = 0;
+  double totalGet = 0;
+  String searchQuery = '';
+  List<TransactionModel> filteredTransactions = [];
+  String selectedSort = 'None';
+
+  @override
+  void initState() {
+    super.initState();
+    initUserData();
+  }
+
+  Future<void> initUserData() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    userPhone = prefs.getString('phone') ?? '';
+    if (userPhone.isEmpty) {
+      setState(() => isLoading = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Phone number not found in SharedPreferences'),
+        ),
+      );
+      return;
+    }
+
+    final userIdRes = await http.post(
+      Uri.parse('${Constants.baseUrl}/get_user_id_by_phone.php'),
+      body: {'phone': userPhone},
+    );
+    final idData = jsonDecode(userIdRes.body);
+    if (idData['success'] == true) {
+      userId = idData['user_id'].toString();
+      fetchTransactions();
+    } else {
+      setState(() => isLoading = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to get user ID: ${idData['message']}')),
+      );
+    }
+    print("userid: $userId, phone: $userPhone");
+  }
+
+  Future<void> fetchTransactions() async {
+    final response = await http.post(
+      Uri.parse('${Constants.baseUrl}/get_transactions.php'),
+      body: {'user_id': userId},
+    );
+
+    if (response.statusCode == 200) {
+      final responseBody = jsonDecode(response.body);
+      if (responseBody['success'] == true && responseBody['data'] is List) {
+        final fetchedTransactions =
+            (responseBody['data'] as List)
+                .map((item) => TransactionModel.fromJson(item))
+                .toList();
+
+        double give = 0;
+        double get = 0;
+
+        for (var tx in fetchedTransactions) {
+          double amount = double.tryParse(tx.amount.toString()) ?? 0;
+          if (tx.type == 'minus') {
+            give += amount;
+          } else if (tx.type == 'plus') {
+            get += amount;
+          }
+        }
+
+        setState(() {
+          transactions = fetchedTransactions;
+          filteredTransactions = fetchedTransactions;
+          totalGive = give;
+          totalGet = get;
+          isLoading = false;
+        });
+      } else {
+        setState(() => isLoading = false);
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('No transactions found')));
+      }
+    } else {
+      setState(() => isLoading = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Failed to load transactions')),
+      );
+    }
+  }
+
+  void sortTransactions(String criteria) {
+    setState(() {
+      selectedSort = criteria;
+      switch (criteria) {
+        case 'Name (A-Z)':
+          filteredTransactions.sort(
+            (a, b) => a.contactName.toLowerCase().compareTo(
+              b.contactName.toLowerCase(),
+            ),
+          );
+          break;
+        case 'Name (Z-A)':
+          filteredTransactions.sort(
+            (a, b) => b.contactName.toLowerCase().compareTo(
+              a.contactName.toLowerCase(),
+            ),
+          );
+          break;
+        case 'Time ↑':
+          filteredTransactions.sort(
+            (a, b) => a.createdAt.compareTo(b.createdAt),
+          );
+          break;
+        case 'Time ↓':
+          filteredTransactions.sort(
+            (a, b) => b.createdAt.compareTo(a.createdAt),
+          );
+          break;
+      }
+    });
+  }
+
+  void updateSearchQuery(String query) {
+    setState(() {
+      searchQuery = query.toLowerCase();
+      filteredTransactions =
+          transactions.where((tx) {
+            return tx.contactName.toLowerCase().contains(searchQuery);
+          }).toList();
+      sortTransactions(selectedSort);
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -120,98 +257,136 @@ class CustomerListPage extends StatelessWidget {
       ),
       body: Column(
         children: [
-          Container(
-            color: Colors.white,
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              children: [
-                Row(
-                  children: [
-                    Expanded(
-                      child: Column(
-                        children: const [
-                          Text(
-                            'You will give',
-                            style: TextStyle(color: Colors.grey),
-                          ),
-                          SizedBox(height: 4),
-                          Text(
-                            '₹ 0',
-                            style: TextStyle(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 18,
-                              color: Colors.green,
-                            ),
-                          ),
-                        ],
-                      ),
+          buildTopCard(context),
+          const SizedBox(height: 12),
+          buildSearchBar(),
+          const SizedBox(height: 12),
+          Expanded(
+            child:
+                isLoading
+                    ? const Center(child: CircularProgressIndicator())
+                    : ListView.builder(
+                      itemCount: filteredTransactions.length,
+                      itemBuilder: (context, index) {
+                        final transaction = filteredTransactions[index];
+                        return CustomerTile(
+                          name: transaction.contactName,
+                          amount: '₹ ${transaction.amount}',
+                          subtitle:
+                              transaction.type == 'plus'
+                                  ? "You'll Get"
+                                  : "You'll Give",
+                          time: transaction.createdAt,
+                          isCredit: transaction.type == 'plus',
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => const CustomerDetailPage(),
+                              ),
+                            );
+                          },
+                        );
+                      },
                     ),
-                    Container(width: 1, height: 40, color: Colors.grey[300]),
-                    Expanded(
-                      child: Column(
-                        children: const [
-                          Text(
-                            'You will get',
-                            style: TextStyle(color: Colors.grey),
-                          ),
-                          SizedBox(height: 4),
-                          Text(
-                            '₹ 1,000',
-                            style: TextStyle(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 18,
-                              color: Colors.red,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 12),
-                const Divider(height: 1),
-                const SizedBox(height: 12),
-                GestureDetector(
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (_) => const ReportPage()),
-                    );
-                  },
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: const [
-                      Icon(Icons.bar_chart, size: 16, color: Colors.blue),
-                      SizedBox(width: 4),
-                      Text(
-                        'VIEW REPORT',
-                        style: TextStyle(
-                          color: Colors.blue,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ],
+          ),
+        ],
+      ),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => const AddCustomerPage()),
+          );
+        },
+        backgroundColor: const Color(0xFF9C0F53),
+        icon: const Icon(Icons.person_add),
+        label: const Text('Add Customer'),
+      ),
+    );
+  }
+
+  Widget buildTopCard(BuildContext context) {
+    return Container(
+      color: Colors.white,
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        children: [
+          Row(
+            children: [
+              buildBalanceCard(
+                'You will give',
+                '₹ ${totalGive.toStringAsFixed(2)}',
+                Colors.green,
+              ),
+              Container(width: 1, height: 40, color: Colors.grey[300]),
+              buildBalanceCard(
+                'You will get',
+                '₹ ${totalGet.toStringAsFixed(2)}',
+                Colors.red,
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          const Divider(height: 1),
+          const SizedBox(height: 12),
+          GestureDetector(
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const ReportPage()),
+              );
+            },
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: const [
+                Icon(Icons.bar_chart, size: 16, color: Colors.blue),
+                SizedBox(width: 4),
+                Text(
+                  'VIEW REPORT',
+                  style: TextStyle(
+                    color: Colors.blue,
+                    fontWeight: FontWeight.bold,
                   ),
                 ),
               ],
             ),
           ),
-          const SizedBox(height: 12),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
+        ],
+      ),
+    );
+  }
+
+  Widget buildBalanceCard(String title, String amount, Color color) {
+    return Expanded(
+      child: Column(
+        children: [
+          Text(title, style: const TextStyle(color: Colors.grey)),
+          const SizedBox(height: 4),
+          Text(
+            amount,
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+              fontSize: 18,
+              color: color,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget buildSearchBar() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: Row(
+        children: [
+          Expanded(
             child: TextField(
+              onChanged: updateSearchQuery,
               decoration: InputDecoration(
                 hintText: 'Search Customer',
                 prefixIcon: const Icon(Icons.search),
-                suffixIcon: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: const [
-                    Icon(Icons.sort),
-                    SizedBox(width: 12),
-                    Icon(Icons.picture_as_pdf),
-                    SizedBox(width: 8),
-                  ],
-                ),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
                   borderSide: BorderSide.none,
@@ -221,50 +396,32 @@ class CustomerListPage extends StatelessWidget {
               ),
             ),
           ),
-          const SizedBox(height: 12),
-          Expanded(
-            child: ListView(
-              children: [
-                CustomerTile(
-                  name: 'Eva Charusat',
-                  amount: '₹ 1,000',
-                  subtitle: "You'll Get",
-                  time: '10 minutes ago',
-                  isCredit: true,
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) => const CustomerDetailPage(),
-                      ),
-                    );
-                  },
-                ),
-                CustomerTile(
-                  name: 'John Doe',
-                  amount: '₹ 500',
-                  subtitle: "You'll Give",
-                  time: 'Yesterday',
-                  isCredit: false,
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) => const CustomerDetailPage(),
-                      ),
-                    );
-                  },
-                ),
-              ],
-            ),
+          const SizedBox(width: 8),
+          PopupMenuButton<String>(
+            tooltip: 'Sort',
+            icon: const Icon(Icons.sort, color: Colors.black54),
+            onSelected: sortTransactions,
+            itemBuilder:
+                (context) => [
+                  const PopupMenuItem(
+                    value: 'Name (A-Z)',
+                    child: Text('Name (A-Z)'),
+                  ),
+                  const PopupMenuItem(
+                    value: 'Name (Z-A)',
+                    child: Text('Name (Z-A)'),
+                  ),
+                  const PopupMenuItem(
+                    value: 'Time ↑',
+                    child: Text('Time Ascending'),
+                  ),
+                  const PopupMenuItem(
+                    value: 'Time ↓',
+                    child: Text('Time Descending'),
+                  ),
+                ],
           ),
         ],
-      ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () {},
-        backgroundColor: const Color(0xFF9C0F53),
-        icon: const Icon(Icons.person_add),
-        label: const Text('Add Customer'),
       ),
     );
   }
