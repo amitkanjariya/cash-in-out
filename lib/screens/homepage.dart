@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:cashinout/models/transaction_model.dart';
+import 'package:cashinout/screens/profilepage.dart';
 import 'package:cashinout/utils/constants.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -185,8 +186,12 @@ class _CustomerListPageState extends State<CustomerListPage> {
       searchQuery = query.toLowerCase();
       filteredTransactions =
           transactions.where((tx) {
-            return tx.contactName.toLowerCase().contains(searchQuery);
+            final query = searchQuery.toLowerCase();
+            return tx.contactName.toLowerCase().contains(query) ||
+                tx.contactPhone.toLowerCase().contains(query) ||
+                tx.amount.toString().toLowerCase().contains(query);
           }).toList();
+
       sortTransactions(selectedSort);
     });
   }
@@ -197,64 +202,34 @@ class _CustomerListPageState extends State<CustomerListPage> {
       backgroundColor: Colors.grey[100],
       appBar: AppBar(
         backgroundColor: const Color(0xFF1565C0),
-        toolbarHeight: 130,
         elevation: 0,
         automaticallyImplyLeading: false,
-        title: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+        title: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Row(
-              children: const [
+            const Row(
+              children: [
                 Icon(Icons.book, color: Colors.white),
                 SizedBox(width: 8),
                 Text(
-                  'practice',
+                  'Cash In Out',
                   style: TextStyle(color: Colors.white, fontSize: 20),
                 ),
-                Icon(Icons.arrow_drop_down, color: Colors.white),
-                Spacer(),
-                Icon(Icons.calendar_today, color: Colors.white),
               ],
             ),
-            SizedBox(height: 12),
-            Row(
-              children: [
-                const Text(
-                  'Customers',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const SizedBox(width: 16),
-                Row(
-                  children: [
-                    const Text(
-                      'Suppliers',
-                      style: TextStyle(color: Colors.white70),
-                    ),
-                    const SizedBox(width: 4),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 6,
-                        vertical: 2,
-                      ),
-                      decoration: BoxDecoration(
-                        color: Colors.green,
-                        borderRadius: BorderRadius.circular(4),
-                      ),
-                      child: const Text(
-                        'NEW',
-                        style: TextStyle(color: Colors.white, fontSize: 10),
-                      ),
-                    ),
-                  ],
-                ),
-              ],
+            IconButton(
+              icon: const Icon(Icons.account_circle, color: Colors.white),
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const ProfilePage()),
+                );
+              },
             ),
           ],
         ),
       ),
+
       body: Column(
         children: [
           buildTopCard(context),
@@ -299,9 +274,12 @@ class _CustomerListPageState extends State<CustomerListPage> {
             MaterialPageRoute(builder: (context) => const AddCustomerPage()),
           );
         },
-        backgroundColor: const Color(0xFF9C0F53),
-        icon: const Icon(Icons.person_add),
-        label: const Text('Add Customer'),
+        backgroundColor: const Color.fromARGB(255, 96, 33, 63),
+        icon: const Icon(Icons.person_add, color: Colors.white),
+        label: const Text(
+          'Add Customer',
+          style: TextStyle(color: Colors.white),
+        ),
       ),
     );
   }
