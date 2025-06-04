@@ -1,7 +1,156 @@
+import 'dart:convert';
+import 'package:cashinout/models/transaction_model.dart';
+import 'package:cashinout/utils/constants.dart';
+import 'package:cashinout/utils/helper.dart';
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:http/http.dart' as http;
+import 'entryrow.dart';
 
-class ReportPage extends StatelessWidget {
+class ReportPage extends StatefulWidget {
   const ReportPage({super.key});
+
+  @override
+  State<ReportPage> createState() => _ReportPageState();
+}
+
+class _ReportPageState extends State<ReportPage> {
+  String userPhone = '';
+  String userId = '';
+  bool isLoading = true;
+  List<TransactionModel> transactions = [];
+  double totalGive = 0;
+  double totalGet = 0;
+  String searchQuery = '';
+  List<TransactionModel> filteredTransactions = [];
+  String selectedSort = 'None';
+
+  @override
+  void initState() {
+    super.initState();
+    initUserData();
+  }
+
+  Future<void> initUserData() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    userPhone = prefs.getString('phone') ?? '';
+    if (userPhone.isEmpty) {
+      setState(() => isLoading = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Phone number not found in SharedPreferences'),
+        ),
+      );
+      return;
+    }
+
+    final userIdRes = await http.post(
+      Uri.parse('${Constants.baseUrl}/get_user_id_by_phone.php'),
+      body: {'phone': userPhone},
+    );
+    final idData = jsonDecode(userIdRes.body);
+    if (idData['success'] == true) {
+      userId = idData['user_id'].toString();
+      fetchTransactions();
+    } else {
+      setState(() => isLoading = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to get user ID: ${idData['message']}')),
+      );
+    }
+  }
+
+  Future<void> fetchTransactions() async {
+    final response = await http.post(
+      Uri.parse('${Constants.baseUrl}/get_transactions.php'),
+      body: {'user_id': userId},
+    );
+
+    if (response.statusCode == 200) {
+      final responseBody = jsonDecode(response.body);
+      if (responseBody['success'] == true && responseBody['data'] is List) {
+        final fetchedTransactions =
+            (responseBody['data'] as List)
+                .map((item) => TransactionModel.fromJson(item))
+                .toList();
+
+        double give = 0;
+        double get = 0;
+
+        for (var tx in fetchedTransactions) {
+          double amount = double.tryParse(tx.amount.toString()) ?? 0;
+          if (tx.type == 'minus') {
+            give += amount;
+          } else if (tx.type == 'plus') {
+            get += amount;
+          }
+        }
+
+        setState(() {
+          transactions = fetchedTransactions;
+          filteredTransactions = fetchedTransactions;
+          totalGive = give;
+          totalGet = get;
+          isLoading = false;
+        });
+      } else {
+        setState(() => isLoading = false);
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('No transactions found')));
+      }
+    } else {
+      setState(() => isLoading = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Failed to load transactions')),
+      );
+    }
+  }
+
+  void sortTransactions(String criteria) {
+    setState(() {
+      selectedSort = criteria;
+      switch (criteria) {
+        case 'Name (A-Z)':
+          filteredTransactions.sort(
+            (a, b) => a.contactName.toLowerCase().compareTo(
+              b.contactName.toLowerCase(),
+            ),
+          );
+          break;
+        case 'Name (Z-A)':
+          filteredTransactions.sort(
+            (a, b) => b.contactName.toLowerCase().compareTo(
+              a.contactName.toLowerCase(),
+            ),
+          );
+          break;
+        case 'Time ↑':
+          filteredTransactions.sort(
+            (a, b) => a.createdAt.compareTo(b.createdAt),
+          );
+          break;
+        case 'Time ↓':
+          filteredTransactions.sort(
+            (a, b) => b.createdAt.compareTo(a.createdAt),
+          );
+          break;
+      }
+    });
+  }
+
+  void updateSearchQuery(String query) {
+    setState(() {
+      searchQuery = query.toLowerCase();
+      filteredTransactions =
+          transactions.where((tx) {
+            return tx.contactName.toLowerCase().contains(searchQuery) ||
+                tx.contactPhone.toLowerCase().contains(searchQuery) ||
+                tx.amount.toString().toLowerCase().contains(searchQuery);
+          }).toList();
+      sortTransactions(selectedSort);
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -18,98 +167,8 @@ class ReportPage extends StatelessWidget {
       ),
       body: Column(
         children: [
-          // Date Pickers
-          Container(
-            color: Colors.blue[800],
-            padding: const EdgeInsets.all(16),
-            child: Row(
-              children: [
-                Expanded(
-                  child: ElevatedButton.icon(
-                    onPressed: () {},
-                    icon: const Icon(Icons.calendar_today, size: 16),
-                    label: const Text('Start Date'),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.white,
-                      foregroundColor: Colors.black,
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: ElevatedButton.icon(
-                    onPressed: () {},
-                    icon: const Icon(Icons.calendar_today, size: 16),
-                    label: const Text('End Date'),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.white,
-                      foregroundColor: Colors.black,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-
-          // Search & Filter
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            child: Row(
-              children: [
-                Expanded(
-                  child: TextField(
-                    decoration: InputDecoration(
-                      hintText: 'Search Entries',
-                      filled: true,
-                      fillColor: Colors.white,
-                      prefixIcon: const Icon(Icons.search),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12),
-                  decoration: BoxDecoration(
-                    color: Colors.blue[100],
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: DropdownButtonHideUnderline(
-                    child: DropdownButton<String>(
-                      value: 'All',
-                      icon: const Icon(Icons.arrow_drop_down),
-                      style: const TextStyle(color: Colors.black),
-                      dropdownColor: Colors.white,
-                      onChanged: (String? value) {
-                        // UI only — add logic if needed later
-                      },
-                      items: const [
-                        DropdownMenuItem(value: 'All', child: Text('All')),
-                        DropdownMenuItem(
-                          value: 'This Month',
-                          child: Text('This Month'),
-                        ),
-                        DropdownMenuItem(
-                          value: 'Last Week',
-                          child: Text('Last Week'),
-                        ),
-                        DropdownMenuItem(
-                          value: 'Last Month',
-                          child: Text('Last Month'),
-                        ),
-                        DropdownMenuItem(
-                          value: 'Single Day',
-                          child: Text('Single Day'),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
+          buildTopCard(context),
+          buildSearchbar(),
 
           // Net Balance
           Container(
@@ -125,16 +184,17 @@ class ReportPage extends StatelessWidget {
             ),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: const [
-                Text(
+              children: [
+                const Text(
                   "Net Balance",
                   style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
                 ),
                 Text(
-                  "₹ 400",
+                  "₹ ${(totalGet - totalGive).toStringAsFixed(2)}",
                   style: TextStyle(
                     fontSize: 18,
-                    color: Colors.red,
+                    color:
+                        (totalGet - totalGive) >= 0 ? Colors.green : Colors.red,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
@@ -170,28 +230,27 @@ class ReportPage extends StatelessWidget {
               ],
             ),
           ),
-
           const Divider(height: 1),
 
-          // Entry List
+          // Transaction List
           Expanded(
-            child: ListView(
-              children: const [
-                EntryRow(
-                  date: '16 May 25 • 12:29 PM',
-                  balance: '₹ 400',
-                  gave: '',
-                  got: '₹ 100',
-                ),
-                EntryRow(
-                  date: '16 May 25 • 12:27 PM',
-                  balance: '₹ 500',
-                  gave: '₹ 500',
-                  got: '',
-                  note: 'Food',
-                ),
-              ],
-            ),
+            child:
+                isLoading
+                    ? const Center(child: CircularProgressIndicator())
+                    : filteredTransactions.isEmpty
+                    ? const Center(child: Text('No transactions found'))
+                    : ListView.builder(
+                      itemCount: filteredTransactions.length,
+                      itemBuilder: (context, index) {
+                        final tx = filteredTransactions[index];
+                        return EntryRow(
+                          name: tx.contactName,
+                          date: formatDateTime(tx.createdAt),
+                          gave: tx.type == 'minus' ? '${tx.amount}' : '',
+                          got: tx.type == 'plus' ? '${tx.amount}' : '',
+                        );
+                      },
+                    ),
           ),
         ],
       ),
@@ -223,110 +282,76 @@ class ReportPage extends StatelessWidget {
       ),
     );
   }
-}
 
-class EntryRow extends StatelessWidget {
-  final String date;
-  final String balance;
-  final String gave;
-  final String got;
-  final String? note;
-
-  const EntryRow({
-    super.key,
-    required this.date,
-    required this.balance,
-    required this.gave,
-    required this.got,
-    this.note,
-  });
-
-  @override
-  Widget build(BuildContext context) {
+  Widget buildTopCard(BuildContext context) {
     return Container(
-      margin: const EdgeInsets.symmetric(vertical: 4, horizontal: 12),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(8),
-        boxShadow: [
-          BoxShadow(color: Colors.black12.withOpacity(0.05), blurRadius: 2),
-        ],
-      ),
+      color: Colors.blue[800],
+      padding: const EdgeInsets.all(16),
       child: Row(
         children: [
-          // ENTRIES column
           Expanded(
-            flex: 2,
-            child: Padding(
-              padding: const EdgeInsets.all(12),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(date, style: const TextStyle(fontSize: 12)),
-                  const SizedBox(height: 2),
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 6,
-                      vertical: 2,
-                    ),
-                    decoration: BoxDecoration(
-                      color: Colors.grey[200],
-                      borderRadius: BorderRadius.circular(4),
-                    ),
-                    child: Text(
-                      'Bal. $balance',
-                      style: const TextStyle(fontSize: 10, color: Colors.grey),
-                    ),
-                  ),
-                  if (note != null) ...[
-                    const SizedBox(height: 4),
-                    Text(note!, style: const TextStyle(fontSize: 12)),
-                  ],
-                ],
+            child: ElevatedButton.icon(
+              onPressed: () {},
+              icon: const Icon(Icons.calendar_today, size: 16),
+              label: const Text('Start Date'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.white,
+                foregroundColor: Colors.black,
               ),
             ),
           ),
-
-          // YOU GAVE
+          const SizedBox(width: 12),
           Expanded(
-            child: Container(
-              padding: const EdgeInsets.all(12),
-              color: gave.isNotEmpty ? Colors.white : Colors.grey[100],
-              child:
-                  gave.isNotEmpty
-                      ? Align(
-                        alignment: Alignment.center,
-                        child: Text(
-                          gave,
-                          style: const TextStyle(
-                            color: Colors.red,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      )
-                      : const SizedBox.shrink(),
+            child: ElevatedButton.icon(
+              onPressed: () {},
+              icon: const Icon(Icons.calendar_today, size: 16),
+              label: const Text('End Date'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.white,
+                foregroundColor: Colors.black,
+              ),
             ),
           ),
+        ],
+      ),
+    );
+  }
 
-          // YOU GOT
+  Widget buildSearchbar() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      child: Row(
+        children: [
           Expanded(
-            child: Container(
-              padding: const EdgeInsets.all(12),
-              color: got.isNotEmpty ? Colors.white : Colors.grey[100],
-              child:
-                  got.isNotEmpty
-                      ? Align(
-                        alignment: Alignment.center,
-                        child: Text(
-                          got,
-                          style: const TextStyle(
-                            color: Colors.green,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      )
-                      : const SizedBox.shrink(),
+            child: TextField(
+              onChanged: updateSearchQuery,
+              decoration: InputDecoration(
+                hintText: 'Search Customer',
+                prefixIcon: const Icon(Icons.search),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide.none,
+                ),
+                filled: true,
+                fillColor: Colors.white,
+              ),
             ),
+          ),
+          const SizedBox(width: 8),
+          PopupMenuButton<String>(
+            tooltip: 'Sort',
+            icon: const Icon(Icons.sort, color: Colors.black54),
+            onSelected: sortTransactions,
+            itemBuilder:
+                (context) => const [
+                  PopupMenuItem(value: 'Name (A-Z)', child: Text('Name (A-Z)')),
+                  PopupMenuItem(value: 'Name (Z-A)', child: Text('Name (Z-A)')),
+                  PopupMenuItem(value: 'Time ↑', child: Text('Time Ascending')),
+                  PopupMenuItem(
+                    value: 'Time ↓',
+                    child: Text('Time Descending'),
+                  ),
+                ],
           ),
         ],
       ),
