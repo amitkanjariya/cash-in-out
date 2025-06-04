@@ -7,8 +7,8 @@ import 'package:cashinout/utils/constants.dart';
 class YouGotPage extends StatefulWidget {
   final String? name;
   final String? phone;
-
-  const YouGotPage({super.key, this.name, this.phone});
+  final String? customerId;
+  const YouGotPage({super.key, this.name, this.phone, this.customerId});
 
   @override
   State<YouGotPage> createState() => _YouGotPageState();
@@ -24,6 +24,7 @@ class _YouGotPageState extends State<YouGotPage> {
     final detail = _detailsController.text.trim();
     final customerPhone = widget.phone?.trim() ?? '';
     final customerName = widget.name?.trim() ?? '';
+    final customerId = widget.customerId?.trim() ?? '';
 
     if (amount.isEmpty) {
       ScaffoldMessenger.of(
@@ -87,6 +88,11 @@ class _YouGotPageState extends State<YouGotPage> {
         'detail': detail,
         'type': 'plus',
       };
+
+      // Include customer ID if available
+      if (customerId.isNotEmpty) {
+        body['customer_id'] = customerId;
+      }
 
       if (customerPhone.isNotEmpty) {
         body['customer_phone'] = customerPhone;

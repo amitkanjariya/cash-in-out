@@ -10,3 +10,7 @@ String formatDateTime(String rawDateTime) {
     return rawDateTime; // fallback in case of parse error
   }
 }
+
+String formatDate(DateTime date) {
+  return "${date.day.toString().padLeft(2, '0')}-${date.month.toString().padLeft(2, '0')}-${date.year}";
+}

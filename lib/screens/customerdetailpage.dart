@@ -416,7 +416,10 @@ class _CustomerDetailPageState extends State<CustomerDetailPage> {
                 onPressed: () {
                   Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (_) => const YouGavePage()),
+                    MaterialPageRoute(
+                      builder:
+                          (_) => YouGavePage(customerId: widget.customerId),
+                    ),
                   );
                 },
                 style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
@@ -429,7 +432,9 @@ class _CustomerDetailPageState extends State<CustomerDetailPage> {
                 onPressed: () {
                   Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (_) => const YouGotPage()),
+                    MaterialPageRoute(
+                      builder: (_) => YouGotPage(customerId: widget.customerId),
+                    ),
                   );
                 },
                 style: ElevatedButton.styleFrom(backgroundColor: Colors.green),

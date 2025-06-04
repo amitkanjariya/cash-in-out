@@ -1,5 +1,3 @@
-import 'dart:ffi';
-
 class TransactionModel {
   final String amount;
   final String detail;
