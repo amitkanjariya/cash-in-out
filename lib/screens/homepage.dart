@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:cashinout/models/transaction_model.dart';
 import 'package:cashinout/screens/profilepage.dart';
 import 'package:cashinout/utils/constants.dart';
+import 'package:cashinout/utils/helper.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:http/http.dart' as http;
@@ -141,6 +142,7 @@ class _CustomerListPageState extends State<CustomerListPage> {
           context,
         ).showSnackBar(const SnackBar(content: Text('No transactions found')));
       }
+      print("Transactions fetched: ${transactions.length}");
     } else {
       setState(() => isLoading = false);
       ScaffoldMessenger.of(context).showSnackBar(
@@ -240,29 +242,39 @@ class _CustomerListPageState extends State<CustomerListPage> {
             child:
                 isLoading
                     ? const Center(child: CircularProgressIndicator())
-                    : ListView.builder(
-                      itemCount: filteredTransactions.length,
-                      itemBuilder: (context, index) {
-                        final transaction = filteredTransactions[index];
-                        return CustomerTile(
-                          name: transaction.contactName,
-                          amount: '₹ ${transaction.amount}',
-                          subtitle:
-                              transaction.type == 'plus'
-                                  ? "You'll Get"
-                                  : "You'll Give",
-                          time: transaction.createdAt,
-                          isCredit: transaction.type == 'plus',
-                          onTap: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (_) => const CustomerDetailPage(),
-                              ),
-                            );
-                          },
-                        );
-                      },
+                    : RefreshIndicator(
+                      onRefresh: fetchTransactions,
+                      child: ListView.builder(
+                        physics:
+                            const AlwaysScrollableScrollPhysics(), // Ensures pull works even when few items
+                        itemCount: filteredTransactions.length,
+                        itemBuilder: (context, index) {
+                          final transaction = filteredTransactions[index];
+                          return CustomerTile(
+                            name: transaction.contactName,
+                            amount: '₹ ${transaction.amount}',
+                            subtitle:
+                                transaction.type == 'plus'
+                                    ? "You'll Get"
+                                    : "You'll Give",
+                            time: transaction.createdAt,
+                            isCredit: transaction.type == 'plus',
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder:
+                                      (_) => CustomerDetailPage(
+                                        userId: userId,
+                                        customerId:
+                                            transaction.contactId.toString(),
+                                      ),
+                                ),
+                              );
+                            },
+                          );
+                        },
+                      ),
                     ),
           ),
         ],
@@ -434,7 +446,10 @@ class CustomerTile extends StatelessWidget {
           ),
         ),
         title: Text(name, style: const TextStyle(fontWeight: FontWeight.w600)),
-        subtitle: Text(time, style: const TextStyle(fontSize: 12)),
+        subtitle: Text(
+          formatDateTime(time),
+          style: const TextStyle(fontSize: 12),
+        ),
         trailing: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           crossAxisAlignment: CrossAxisAlignment.end,

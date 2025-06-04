@@ -1,10 +1,211 @@
 import 'package:cashinout/screens/you_gave_page.dart';
 import 'package:cashinout/screens/you_got_page.dart';
+import 'package:cashinout/utils/constants.dart';
+import 'package:cashinout/utils/entry_detail_card.dart';
+import 'package:cashinout/utils/helper.dart';
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
+import 'package:url_launcher/url_launcher.dart';
 import 'customerprofilepage.dart';
 
-class CustomerDetailPage extends StatelessWidget {
-  const CustomerDetailPage({super.key});
+class CustomerDetailPage extends StatefulWidget {
+  final String userId;
+  final String customerId;
+
+  const CustomerDetailPage({
+    super.key,
+    required this.userId,
+    required this.customerId,
+  });
+
+  @override
+  State<CustomerDetailPage> createState() => _CustomerDetailPageState();
+}
+
+class _CustomerDetailPageState extends State<CustomerDetailPage> {
+  String customerName = 'Loading...';
+  String customerPhone = '';
+  List<Map<String, dynamic>> entries = [];
+  double totalGave = 0.0;
+  double totalGot = 0.0;
+
+  @override
+  void initState() {
+    super.initState();
+    fetchCustomerDetails();
+    fetchCustomerEntries();
+  }
+
+  Future<void> fetchCustomerDetails() async {
+    try {
+      final response = await http.post(
+        Uri.parse('${Constants.baseUrl}/get_customer_details.php'),
+        body: {'user_id': widget.userId, 'customer_id': widget.customerId},
+      );
+      final jsonResponse = jsonDecode(response.body);
+      print("user_id: ${widget.userId}");
+      print("customer_id: ${widget.customerId}");
+      if (jsonResponse['success'] == true) {
+        final data = jsonResponse['data'];
+        print("customer data: $data");
+        setState(() {
+          customerName = data['name'] ?? 'No Name';
+          customerPhone = data['phone'] ?? '';
+        });
+      } else {
+        setState(() {
+          customerName = 'Error loading';
+        });
+      }
+    } catch (e) {
+      setState(() {
+        customerName = 'Failed to load';
+      });
+    }
+  }
+
+  Future<void> fetchCustomerEntries() async {
+    try {
+      final response = await http.post(
+        Uri.parse('${Constants.baseUrl}/get_customer_transactions.php'),
+        body: {'user_id': widget.userId, 'customer_id': widget.customerId},
+      );
+      final data = jsonDecode(response.body);
+
+      if (data['success'] == true && data['data'] is List) {
+        List<Map<String, dynamic>> filtered = [];
+        double gave = 0.0;
+        double got = 0.0;
+        double balance = 0.0;
+
+        // Start from the end and calculate balance backward
+        for (var i = data['data'].length - 1; i >= 0; i--) {
+          var item = data['data'][i];
+          String type = item['type'] ?? '';
+          String amountStr = item['amount'] ?? '0';
+          double amount = double.tryParse(amountStr) ?? 0.0;
+
+          String entryGave = '';
+          String entryGot = '';
+
+          if (type == 'plus') {
+            entryGot = amountStr;
+            got += amount;
+            balance += amount;
+          } else if (type == 'minus') {
+            entryGave = amountStr;
+            gave += amount;
+            balance -= amount;
+          }
+
+          filtered.insert(0, {
+            'date': item['created_at'] ?? '',
+            'gave': entryGave,
+            'got': entryGot,
+            'balance': balance.toStringAsFixed(2),
+            'note': item['detail'] ?? '',
+          });
+        }
+
+        setState(() {
+          entries = filtered;
+          totalGave = gave;
+          totalGot = got;
+        });
+      } else {
+        setState(() {
+          entries = [];
+          totalGave = 0;
+          totalGot = 0;
+        });
+      }
+    } catch (e) {
+      setState(() {
+        entries = [];
+        totalGave = 0;
+        totalGot = 0;
+      });
+    }
+  }
+
+  void _launchDialer() async {
+    if (customerPhone.isNotEmpty) {
+      final Uri uri = Uri(scheme: 'tel', path: customerPhone);
+      if (await canLaunchUrl(uri)) {
+        await launchUrl(uri);
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Could not launch dialer')),
+        );
+      }
+    }
+  }
+
+  void _sendSMS() async {
+    if (customerPhone.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Phone number not available')),
+      );
+      return;
+    }
+
+    String message = 'Hello $customerName, ';
+    double diff = (totalGave - totalGot).abs();
+
+    if (totalGave > totalGot) {
+      message += 'you have to give ₹${diff.toStringAsFixed(2)}.';
+    } else if (totalGot > totalGave) {
+      message += 'you have to get ₹${diff.toStringAsFixed(2)}.';
+    } else {
+      message += 'your account is settled.';
+    }
+
+    final Uri smsUri = Uri.parse(
+      'sms:$customerPhone?body=${Uri.encodeComponent(message)}',
+    );
+
+    if (await canLaunchUrl(smsUri)) {
+      await launchUrl(smsUri);
+    } else {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Could not open SMS app')));
+    }
+  }
+
+  void _sendWhatsApp() async {
+    if (customerPhone.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Phone number not available')),
+      );
+      return;
+    }
+
+    String message = 'Hello $customerName, ';
+    double diff = (totalGave - totalGot).abs();
+
+    if (totalGave > totalGot) {
+      message += 'you have to give ₹${diff.toStringAsFixed(2)}.';
+    } else if (totalGot > totalGave) {
+      message += 'you have to get ₹${diff.toStringAsFixed(2)}.';
+    } else {
+      message += 'your account is settled.';
+    }
+
+    String phone = customerPhone.replaceAll(RegExp(r'\D'), '');
+    final whatsappUrl = Uri.parse(
+      'https://wa.me/$phone?text=${Uri.encodeComponent(message)}',
+    );
+
+    if (await canLaunchUrl(whatsappUrl)) {
+      await launchUrl(whatsappUrl, mode: LaunchMode.externalApplication);
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Could not launch WhatsApp')),
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -19,9 +220,7 @@ class CustomerDetailPage extends StatelessWidget {
           onTap: () {
             Navigator.push(
               context,
-              MaterialPageRoute(
-                builder: (context) => const CustomerProfilePage(),
-              ),
+              MaterialPageRoute(builder: (_) => const CustomerProfilePage()),
             );
           },
           child: Row(
@@ -33,30 +232,29 @@ class CustomerDetailPage extends StatelessWidget {
               const SizedBox(width: 8),
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
-                children: const [
+                children: [
                   Text(
-                    'Eva Charusat',
-                    style: TextStyle(color: Colors.white, fontSize: 16),
+                    customerName,
+                    style: const TextStyle(color: Colors.white, fontSize: 16),
                   ),
                   Text(
-                    'Click here to view settings',
-                    style: TextStyle(color: Colors.white70, fontSize: 12),
+                    customerPhone,
+                    style: const TextStyle(color: Colors.white70, fontSize: 12),
                   ),
                 ],
               ),
             ],
           ),
         ),
-        actions: const [
-          Icon(Icons.call, color: Colors.white),
-          SizedBox(width: 16),
-          Icon(Icons.more_vert, color: Colors.white),
-          SizedBox(width: 12),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.call, color: Colors.white),
+            onPressed: _launchDialer,
+          ),
         ],
       ),
       body: Column(
         children: [
-          // "You will get" Box
           Container(
             margin: const EdgeInsets.all(16),
             padding: const EdgeInsets.all(16),
@@ -65,54 +263,80 @@ class CustomerDetailPage extends StatelessWidget {
               borderRadius: BorderRadius.circular(12),
               boxShadow: [BoxShadow(color: Colors.black12, blurRadius: 4)],
             ),
-            child: Column(
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: const [
-                    Text(
-                      'You will get',
-                      style: TextStyle(fontSize: 16, color: Colors.black87),
-                    ),
-                    Text(
-                      '₹ 1,000',
+            child: Builder(
+              builder: (_) {
+                if (totalGave > totalGot) {
+                  double diff = totalGave - totalGot;
+                  return Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Text('You Gave', style: TextStyle(fontSize: 16)),
+                      Text(
+                        '₹ ${diff.toStringAsFixed(2)}',
+                        style: const TextStyle(
+                          color: Colors.red,
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
+                  );
+                } else if (totalGot > totalGave) {
+                  double diff = totalGot - totalGave;
+                  return Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Text('You Got', style: TextStyle(fontSize: 16)),
+                      Text(
+                        '₹ ${diff.toStringAsFixed(2)}',
+                        style: const TextStyle(
+                          color: Colors.green,
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
+                  );
+                } else {
+                  return const Center(
+                    child: Text(
+                      'Settled up',
                       style: TextStyle(
-                        color: Colors.red,
-                        fontSize: 20,
+                        color: Colors.grey,
+                        fontSize: 18,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
-                  ],
-                ),
-                const Divider(height: 20),
-                ListTile(
-                  dense: true,
-                  contentPadding: EdgeInsets.zero,
-                  leading: const Icon(Icons.calendar_today, color: Colors.blue),
-                  title: const Text('Set Collection Dates'),
-                  trailing: const Icon(Icons.arrow_forward_ios, size: 16),
-                ),
-              ],
+                  );
+                }
+              },
             ),
           ),
-          // Quick Actions
           Container(
             margin: const EdgeInsets.symmetric(horizontal: 16),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceAround,
-              children: const [
-                IconWithLabel(icon: Icons.picture_as_pdf, label: 'Report'),
-                IconWithLabel(icon: Icons.payments, label: 'Payments'),
-                IconWithLabel(
-                  icon: Icons.notifications_active,
-                  label: 'Reminders',
+              children: [
+                const IconWithLabel(
+                  icon: Icons.picture_as_pdf,
+                  label: 'Report',
                 ),
-                IconWithLabel(icon: Icons.sms, label: 'SMS'),
+                const IconWithLabel(icon: Icons.payments, label: 'Payments'),
+                GestureDetector(
+                  onTap: _sendWhatsApp,
+                  child: const IconWithLabel(
+                    icon: Icons.payments,
+                    label: 'WhatsApp',
+                  ),
+                ),
+                GestureDetector(
+                  onTap: _sendSMS,
+                  child: const IconWithLabel(icon: Icons.sms, label: 'SMS'),
+                ),
               ],
             ),
           ),
           const SizedBox(height: 12),
-          // Header Row for Entries
           Container(
             color: Colors.grey[200],
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -141,41 +365,48 @@ class CustomerDetailPage extends StatelessWidget {
             ),
           ),
           const Divider(height: 1),
-          // Entries List
           Expanded(
-            child: ListView(
-              children: const [
-                EntryRow(
-                  date: '16 May 25 • 12:31 PM',
-                  balance: '₹ 1,000',
-                  gave: '₹ 800',
-                  got: '',
-                ),
-                EntryRow(
-                  date: '16 May 25 • 12:31 PM',
-                  balance: '₹ 200',
-                  gave: '',
-                  got: '₹ 200',
-                ),
-                EntryRow(
-                  date: '16 May 25 • 12:29 PM',
-                  balance: '₹ 400',
-                  gave: '',
-                  got: '₹ 100',
-                ),
-                EntryRow(
-                  date: '16 May 25 • 12:27 PM',
-                  balance: '₹ 500',
-                  gave: '₹ 500',
-                  got: '',
-                  note: 'Food',
-                ),
-              ],
+            child: ListView.builder(
+              itemCount: entries.length,
+              itemBuilder: (context, index) {
+                final entry = entries[index];
+                return GestureDetector(
+                  onTap: () {
+                    showModalBottomSheet(
+                      context: context,
+                      isScrollControlled: true,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.vertical(
+                          top: Radius.circular(20),
+                        ),
+                      ),
+                      builder: (_) {
+                        return Padding(
+                          padding: MediaQuery.of(context).viewInsets,
+                          child: EntryDetailCard(
+                            date: entry['date'] ?? '',
+                            gave: entry['gave'] ?? '',
+                            got: entry['got'] ?? '',
+                            balance: entry['balance'] ?? '',
+                            note: entry['note'],
+                          ),
+                        );
+                      },
+                    );
+                  },
+                  child: EntryRow(
+                    date: entry['date'] ?? '',
+                    balance: entry['balance'] ?? '',
+                    gave: entry['gave'] ?? '',
+                    got: entry['got'] ?? '',
+                    note: entry['note'],
+                  ),
+                );
+              },
             ),
           ),
         ],
       ),
-      // Bottom Buttons
       bottomNavigationBar: Container(
         padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
         child: Row(
@@ -248,8 +479,16 @@ class EntryRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final double parsedBalance = double.tryParse(balance) ?? 0.0;
+
+    // Decide colors based on balance sign
+    final Color bgColor =
+        parsedBalance < 0 ? Colors.red.shade50 : Colors.green.shade50;
+    final Color textColor = parsedBalance < 0 ? Colors.red : Colors.green;
+
     return Container(
       margin: const EdgeInsets.symmetric(vertical: 4, horizontal: 12),
+      padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(8),
@@ -259,78 +498,61 @@ class EntryRow extends StatelessWidget {
       ),
       child: Row(
         children: [
-          // Column 1: ENTRIES
           Expanded(
             flex: 2,
-            child: Container(
-              padding: const EdgeInsets.all(12),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(date, style: const TextStyle(fontSize: 12)),
-                  const SizedBox(height: 2),
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 6,
-                      vertical: 2,
-                    ),
-                    decoration: BoxDecoration(
-                      color: Colors.grey[200],
-                      borderRadius: BorderRadius.circular(4),
-                    ),
-                    child: Text(
-                      'Bal. $balance',
-                      style: const TextStyle(fontSize: 10, color: Colors.grey),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  formatDateTime(date),
+                  style: const TextStyle(fontSize: 12),
+                ),
+                const SizedBox(height: 4),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 6,
+                    vertical: 2,
+                  ),
+                  decoration: BoxDecoration(
+                    color: bgColor,
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                  child: Text(
+                    'Bal. ${parsedBalance.abs()}',
+                    style: TextStyle(
+                      fontSize: 10,
+                      color: textColor,
+                      fontWeight: FontWeight.w600,
                     ),
                   ),
-                  if (note != null) ...[
-                    const SizedBox(height: 4),
-                    Text(note!, style: const TextStyle(fontSize: 12)),
-                  ],
-                ],
+                ),
+                if (note != null)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 4),
+                    child: Text(
+                      note!,
+                      style: const TextStyle(fontSize: 12, color: Colors.black),
+                    ),
+                  ),
+              ],
+            ),
+          ),
+          Expanded(
+            child: Text(
+              gave,
+              style: const TextStyle(
+                color: Colors.red,
+                fontWeight: FontWeight.bold,
               ),
             ),
           ),
-
-          // Column 2: YOU GAVE
           Expanded(
-            child: Container(
-              color: gave.isNotEmpty ? Colors.white : Colors.grey[100],
-              padding: const EdgeInsets.all(12),
-              child:
-                  gave.isNotEmpty
-                      ? Align(
-                        alignment: Alignment.center,
-                        child: Text(
-                          gave,
-                          style: const TextStyle(
-                            color: Colors.red,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      )
-                      : const SizedBox.shrink(),
-            ),
-          ),
-
-          // Column 3: YOU GOT
-          Expanded(
-            child: Container(
-              color: got.isNotEmpty ? Colors.white : Colors.grey[100],
-              padding: const EdgeInsets.all(12),
-              child:
-                  got.isNotEmpty
-                      ? Align(
-                        alignment: Alignment.center,
-                        child: Text(
-                          got,
-                          style: const TextStyle(
-                            color: Colors.green,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      )
-                      : const SizedBox.shrink(),
+            child: Text(
+              got,
+              style: const TextStyle(
+                color: Colors.green,
+                fontWeight: FontWeight.bold,
+              ),
             ),
           ),
         ],

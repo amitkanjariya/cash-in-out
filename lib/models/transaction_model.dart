@@ -1,8 +1,11 @@
+import 'dart:ffi';
+
 class TransactionModel {
   final String amount;
   final String detail;
   final String type;
   final String createdAt;
+  final String contactId;
   final String contactName;
   final String contactPhone;
 
@@ -11,6 +14,7 @@ class TransactionModel {
     required this.detail,
     required this.type,
     required this.createdAt,
+    required this.contactId,
     required this.contactName,
     required this.contactPhone,
   });
@@ -21,6 +25,7 @@ class TransactionModel {
       detail: json['detail'] ?? '',
       type: json['type'],
       createdAt: json['created_at'],
+      contactId: json['to_id']?.toString() ?? '',
       contactName: json['contact_name'] ?? 'Unknown',
       contactPhone: json['contact_phone'] ?? '',
     );

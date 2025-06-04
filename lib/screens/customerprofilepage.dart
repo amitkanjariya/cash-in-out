@@ -78,74 +78,7 @@ class _CustomerProfilePageState extends State<CustomerProfilePage> {
               trailing: Icon(Icons.arrow_forward_ios, size: 16),
             ),
             const Divider(height: 8),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16.0),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  const Text(
-                    'Switch to',
-                    style: TextStyle(fontWeight: FontWeight.bold),
-                  ),
-                  GestureDetector(
-                    onTap: toggleRole,
-                    child: Container(
-                      padding: const EdgeInsets.all(4),
-                      decoration: BoxDecoration(
-                        border: Border.all(color: Colors.grey),
-                        borderRadius: BorderRadius.circular(24),
-                      ),
-                      child: Row(
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 16,
-                              vertical: 6,
-                            ),
-                            decoration: BoxDecoration(
-                              color:
-                                  isCustomer
-                                      ? Colors.blue[800]
-                                      : Colors.transparent,
-                              borderRadius: BorderRadius.circular(20),
-                            ),
-                            child: Text(
-                              'Customer',
-                              style: TextStyle(
-                                color:
-                                    isCustomer ? Colors.white : Colors.black54,
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 4),
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 16,
-                              vertical: 6,
-                            ),
-                            decoration: BoxDecoration(
-                              color:
-                                  !isCustomer
-                                      ? Colors.blue[800]
-                                      : Colors.transparent,
-                              borderRadius: BorderRadius.circular(20),
-                            ),
-                            child: Text(
-                              'Supplier',
-                              style: TextStyle(
-                                color:
-                                    !isCustomer ? Colors.white : Colors.black54,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 24),
+            const SizedBox(height: 15),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16.0),
               child: OutlinedButton(
