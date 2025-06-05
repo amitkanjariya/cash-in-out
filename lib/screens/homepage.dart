@@ -441,7 +441,7 @@ class CustomerTile extends StatelessWidget {
         leading: CircleAvatar(
           backgroundColor: const Color(0xFF1565C0),
           child: Text(
-            name.substring(0, 2).toUpperCase(),
+            getInitials(name),
             style: const TextStyle(color: Colors.white),
           ),
         ),

@@ -8,6 +8,7 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:url_launcher/url_launcher.dart';
 import 'customerprofilepage.dart';
+import 'customer_report_page.dart';
 
 class CustomerDetailPage extends StatefulWidget {
   final String userId;
@@ -29,7 +30,7 @@ class _CustomerDetailPageState extends State<CustomerDetailPage> {
   List<Map<String, dynamic>> entries = [];
   double totalGave = 0.0;
   double totalGot = 0.0;
-
+  String? profileImageUrl;
   @override
   void initState() {
     super.initState();
@@ -52,6 +53,7 @@ class _CustomerDetailPageState extends State<CustomerDetailPage> {
         setState(() {
           customerName = data['name'] ?? 'No Name';
           customerPhone = data['phone'] ?? '';
+          profileImageUrl = data['profile_image'];
         });
       } else {
         setState(() {
@@ -220,15 +222,32 @@ class _CustomerDetailPageState extends State<CustomerDetailPage> {
           onTap: () {
             Navigator.push(
               context,
-              MaterialPageRoute(builder: (_) => const CustomerProfilePage()),
+              MaterialPageRoute(
+                builder:
+                    (_) => CustomerProfilePage(
+                      userId: widget.userId,
+                      customerId: widget.customerId,
+                    ),
+              ),
             );
           },
           child: Row(
             children: [
-              const CircleAvatar(
+              CircleAvatar(
                 backgroundColor: Colors.white,
-                child: Text('EC', style: TextStyle(color: Colors.blue)),
+                backgroundImage:
+                    profileImageUrl != null
+                        ? NetworkImage(profileImageUrl!) as ImageProvider
+                        : null,
+                child:
+                    profileImageUrl == null
+                        ? Text(
+                          getInitials(customerName),
+                          style: const TextStyle(color: Colors.blue),
+                        )
+                        : null,
               ),
+
               const SizedBox(width: 8),
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -317,9 +336,23 @@ class _CustomerDetailPageState extends State<CustomerDetailPage> {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: [
-                const IconWithLabel(
-                  icon: Icons.picture_as_pdf,
-                  label: 'Report',
+                GestureDetector(
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder:
+                            (_) => CustomerReportPage(
+                              customerId: widget.customerId,
+                              userId: widget.userId,
+                            ),
+                      ),
+                    );
+                  },
+                  child: const IconWithLabel(
+                    icon: Icons.bar_chart,
+                    label: 'Report',
+                  ),
                 ),
                 const IconWithLabel(icon: Icons.payments, label: 'Payments'),
                 GestureDetector(
@@ -370,37 +403,89 @@ class _CustomerDetailPageState extends State<CustomerDetailPage> {
               itemCount: entries.length,
               itemBuilder: (context, index) {
                 final entry = entries[index];
-                return GestureDetector(
-                  onTap: () {
-                    showModalBottomSheet(
-                      context: context,
-                      isScrollControlled: true,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.vertical(
-                          top: Radius.circular(20),
+                final String entryDate = entry['date'];
+                final DateTime currentDate = DateTime.parse(entryDate);
+                final String formattedDate = formatDateWithRelativeLabel(
+                  currentDate,
+                );
+
+                // Show date label only if it's the first entry or date changes
+                bool showDateLabel = false;
+                if (index == 0) {
+                  showDateLabel = true;
+                } else {
+                  final previousDate = DateTime.parse(
+                    entries[index - 1]['date'],
+                  );
+                  showDateLabel = !isSameDate(currentDate, previousDate);
+                }
+
+                return Column(
+                  children: [
+                    if (showDateLabel)
+                      Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 10),
+                        child: Center(
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 5,
+                              vertical: 3,
+                            ),
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(5),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.grey.shade400,
+                                  blurRadius: 2,
+                                  offset: const Offset(0, 1),
+                                ),
+                              ],
+                            ),
+                            child: Text(
+                              formattedDate,
+                              style: const TextStyle(
+                                fontSize: 10,
+                                color: Colors.black87,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ),
                         ),
                       ),
-                      builder: (_) {
-                        return Padding(
-                          padding: MediaQuery.of(context).viewInsets,
-                          child: EntryDetailCard(
-                            date: entry['date'] ?? '',
-                            gave: entry['gave'] ?? '',
-                            got: entry['got'] ?? '',
-                            balance: entry['balance'] ?? '',
-                            note: entry['note'],
+
+                    GestureDetector(
+                      onTap: () {
+                        showModalBottomSheet(
+                          context: context,
+                          isScrollControlled: true,
+                          shape: const RoundedRectangleBorder(
+                            borderRadius: BorderRadius.vertical(
+                              top: Radius.circular(20),
+                            ),
                           ),
+                          builder:
+                              (_) => Padding(
+                                padding: MediaQuery.of(context).viewInsets,
+                                child: EntryDetailCard(
+                                  date: entry['date'] ?? '',
+                                  gave: entry['gave'] ?? '',
+                                  got: entry['got'] ?? '',
+                                  balance: entry['balance'] ?? '',
+                                  note: entry['note'],
+                                ),
+                              ),
                         );
                       },
-                    );
-                  },
-                  child: EntryRow(
-                    date: entry['date'] ?? '',
-                    balance: entry['balance'] ?? '',
-                    gave: entry['gave'] ?? '',
-                    got: entry['got'] ?? '',
-                    note: entry['note'],
-                  ),
+                      child: EntryRow(
+                        date: entry['date'] ?? '',
+                        balance: entry['balance'] ?? '',
+                        gave: entry['gave'] ?? '',
+                        got: entry['got'] ?? '',
+                        note: entry['note'],
+                      ),
+                    ),
+                  ],
                 );
               },
             ),
