@@ -5,6 +5,9 @@ import 'package:cashinout/utils/helper.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:http/http.dart' as http;
+import 'package:pdf/pdf.dart';
+import 'package:pdf/widgets.dart' as pw;
+import 'package:printing/printing.dart';
 import 'entryrow.dart';
 
 class ReportPage extends StatefulWidget {
@@ -26,6 +29,7 @@ class _ReportPageState extends State<ReportPage> {
   String selectedSort = 'None';
   DateTime? startDate;
   DateTime? endDate;
+  String selectedFilter = 'All'; // For filtering (date/income/expense)
 
   @override
   void initState() {
@@ -96,23 +100,62 @@ class _ReportPageState extends State<ReportPage> {
   }
 
   void applyFilters() {
+    DateTime now = DateTime.now();
+
+    switch (selectedFilter) {
+      case 'Today':
+        startDate = DateTime(now.year, now.month, now.day);
+        endDate = now;
+        break;
+      case 'Last Week':
+        startDate = now.subtract(const Duration(days: 7));
+        endDate = now;
+        break;
+      case 'Last Month':
+        startDate = DateTime(now.year, now.month - 1, now.day);
+        endDate = now;
+        break;
+      case 'Last 3 Months':
+        startDate = DateTime(now.year, now.month - 3, now.day);
+        endDate = now;
+        break;
+      case 'Last 6 Months':
+        startDate = DateTime(now.year, now.month - 6, now.day);
+        endDate = now;
+        break;
+      case 'Last Year':
+        startDate = DateTime(now.year - 1, now.month, now.day);
+        endDate = now;
+        break;
+      default:
+        startDate = null;
+        endDate = null;
+    }
+
     filteredTransactions =
         transactions.where((tx) {
           DateTime txDate = DateTime.tryParse(tx.createdAt) ?? DateTime(2000);
+
+          // Date filter
           if (startDate != null && txDate.isBefore(startDate!)) return false;
           if (endDate != null &&
               txDate.isAfter(endDate!.add(const Duration(days: 1))))
             return false;
 
+          // Text search filter
           if (searchQuery.isNotEmpty &&
               !(tx.contactName.toLowerCase().contains(searchQuery) ||
                   tx.contactPhone.toLowerCase().contains(searchQuery) ||
-                  tx.amount.toLowerCase().contains(searchQuery)))
+                  tx.amount.toLowerCase().contains(searchQuery))) {
             return false;
+          }
+
+          // Income/Expense filter
+          if (selectedFilter == 'Expense' && tx.type != 'minus') return false;
+          if (selectedFilter == 'Income' && tx.type != 'plus') return false;
+
           return true;
         }).toList();
-
-    sortTransactions(selectedSort);
 
     totalGive = 0;
     totalGet = 0;
@@ -182,16 +225,131 @@ class _ReportPageState extends State<ReportPage> {
     }
   }
 
+  Future<void> sharePDF() async {
+    final pdf = await _buildPDF();
+    await Printing.sharePdf(bytes: await pdf.save(), filename: 'report.pdf');
+  }
+
+  Future<pw.Document> _buildPDF() async {
+    final pdf = pw.Document();
+    final font = await PdfGoogleFonts.notoSansRegular();
+    final boldFont = await PdfGoogleFonts.notoSansBold();
+
+    pdf.addPage(
+      pw.MultiPage(
+        pageFormat: PdfPageFormat.a4,
+        build:
+            (pw.Context context) => [
+              pw.Text(
+                'Transaction Report',
+                style: pw.TextStyle(font: boldFont, fontSize: 24),
+              ),
+              pw.SizedBox(height: 16),
+              pw.Table.fromTextArray(
+                headers: ['Name', 'Date', 'You Gave', 'You Got'],
+                data:
+                    filteredTransactions.map((tx) {
+                      return [
+                        tx.contactName,
+                        formatDateTime(tx.createdAt),
+                        tx.type == 'minus' ? "₹${tx.amount}" : '',
+                        tx.type == 'plus' ? "₹${tx.amount}" : '',
+                      ];
+                    }).toList(),
+                headerStyle: pw.TextStyle(font: boldFont),
+                cellStyle: pw.TextStyle(font: font),
+              ),
+              pw.SizedBox(height: 24),
+              pw.Text(
+                "Total You Gave: ₹ ${totalGive.toStringAsFixed(2)}",
+                style: pw.TextStyle(font: font, color: PdfColors.red),
+              ),
+              pw.Text(
+                "Total You Got: ₹ ${totalGet.toStringAsFixed(2)}",
+                style: pw.TextStyle(font: font, color: PdfColors.green),
+              ),
+              pw.Text(
+                "Net Balance: ₹ ${(totalGet - totalGive).toStringAsFixed(2)}",
+                style: pw.TextStyle(
+                  font: boldFont,
+                  color:
+                      (totalGet - totalGive) >= 0
+                          ? PdfColors.green
+                          : PdfColors.red,
+                ),
+              ),
+            ],
+      ),
+    );
+
+    return pdf;
+  }
+
+  Future<void> generateAndDownloadPDF() async {
+    final pdf = pw.Document();
+
+    final font = await PdfGoogleFonts.notoSansRegular();
+    final boldFont = await PdfGoogleFonts.notoSansBold();
+
+    pdf.addPage(
+      pw.MultiPage(
+        pageFormat: PdfPageFormat.a4,
+        build:
+            (pw.Context context) => [
+              pw.Text(
+                'Transaction Report',
+                style: pw.TextStyle(font: boldFont, fontSize: 24),
+              ),
+              pw.SizedBox(height: 16),
+              pw.Table.fromTextArray(
+                headers: ['Name', 'Date', 'You Gave', 'You Got'],
+                data:
+                    filteredTransactions.map((tx) {
+                      return [
+                        tx.contactName,
+                        formatDateTime(tx.createdAt),
+                        tx.type == 'minus' ? "₹${tx.amount}" : '',
+                        tx.type == 'plus' ? "₹${tx.amount}" : '',
+                      ];
+                    }).toList(),
+                headerStyle: pw.TextStyle(font: boldFont),
+                cellStyle: pw.TextStyle(font: font),
+              ),
+              pw.SizedBox(height: 24),
+              pw.Text(
+                "Total You Gave: ₹ ${totalGive.toStringAsFixed(2)}",
+                style: pw.TextStyle(font: font, color: PdfColors.red),
+              ),
+              pw.Text(
+                "Total You Got: ₹ ${totalGet.toStringAsFixed(2)}",
+                style: pw.TextStyle(font: font, color: PdfColors.green),
+              ),
+              pw.Text(
+                "Net Balance: ₹ ${(totalGet - totalGive).toStringAsFixed(2)}",
+                style: pw.TextStyle(
+                  font: boldFont,
+                  color:
+                      (totalGet - totalGive) >= 0
+                          ? PdfColors.green
+                          : PdfColors.red,
+                ),
+              ),
+            ],
+      ),
+    );
+
+    await Printing.layoutPdf(
+      onLayout: (PdfPageFormat format) async => pdf.save(),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.grey[100],
       appBar: AppBar(
         backgroundColor: Colors.blue[800],
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.white),
-          onPressed: () => Navigator.pop(context),
-        ),
+
         title: const Text('View Report', style: TextStyle(color: Colors.white)),
         centerTitle: true,
       ),
@@ -283,58 +441,39 @@ class _ReportPageState extends State<ReportPage> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text(
-                "Total Entries",
-                style: TextStyle(fontSize: 12, color: Colors.black54),
-              ),
-              Text(
-                "${filteredTransactions.length}",
-                style: const TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ],
+          buildSummaryColumn("Total Entries", "${filteredTransactions.length}"),
+          buildSummaryColumn(
+            "You Gave",
+            "₹ ${totalGive.toStringAsFixed(0)}",
+            color: Colors.red,
           ),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: [
-              const Text(
-                "You Gave",
-                style: TextStyle(fontSize: 12, color: Colors.black54),
-              ),
-              Text(
-                "₹ ${totalGive.toStringAsFixed(0)}",
-                style: const TextStyle(
-                  fontSize: 16,
-                  color: Colors.red,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ],
-          ),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: [
-              const Text(
-                "You Got",
-                style: TextStyle(fontSize: 12, color: Colors.black54),
-              ),
-              Text(
-                "₹ ${totalGet.toStringAsFixed(0)}",
-                style: const TextStyle(
-                  fontSize: 16,
-                  color: Colors.green,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ],
+          buildSummaryColumn(
+            "You Got",
+            "₹ ${totalGet.toStringAsFixed(0)}",
+            color: Colors.green,
           ),
         ],
       ),
+    );
+  }
+
+  Widget buildSummaryColumn(String title, String value, {Color? color}) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          title,
+          style: const TextStyle(fontSize: 12, color: Colors.black54),
+        ),
+        Text(
+          value,
+          style: TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.bold,
+            color: color ?? Colors.black,
+          ),
+        ),
+      ],
     );
   }
 
@@ -396,7 +535,7 @@ class _ReportPageState extends State<ReportPage> {
         children: [
           Expanded(
             child: ElevatedButton.icon(
-              onPressed: () {},
+              onPressed: generateAndDownloadPDF,
               icon: const Icon(Icons.download),
               label: const Text('Download'),
               style: ElevatedButton.styleFrom(backgroundColor: Colors.blue),
@@ -405,7 +544,7 @@ class _ReportPageState extends State<ReportPage> {
           const SizedBox(width: 12),
           Expanded(
             child: ElevatedButton.icon(
-              onPressed: () {},
+              onPressed: sharePDF,
               icon: const Icon(Icons.share),
               label: const Text('Share'),
               style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
@@ -442,18 +581,27 @@ class _ReportPageState extends State<ReportPage> {
             icon: const Icon(Icons.sort, color: Colors.black54),
             onSelected: (value) {
               setState(() {
-                sortTransactions(value);
+                selectedFilter = value;
+                applyFilters();
               });
             },
             itemBuilder:
                 (context) => const [
-                  PopupMenuItem(value: 'Name (A-Z)', child: Text('Name (A-Z)')),
-                  PopupMenuItem(value: 'Name (Z-A)', child: Text('Name (Z-A)')),
-                  PopupMenuItem(value: 'Time ↑', child: Text('Time Ascending')),
+                  PopupMenuItem(value: 'All', child: Text('All')),
+                  PopupMenuItem(value: 'Expense', child: Text('Expense')),
+                  PopupMenuItem(value: 'Income', child: Text('Income')),
+                  PopupMenuItem(value: 'Today', child: Text('Today')),
+                  PopupMenuItem(value: 'Last Week', child: Text('Last Week')),
+                  PopupMenuItem(value: 'Last Month', child: Text('Last Month')),
                   PopupMenuItem(
-                    value: 'Time ↓',
-                    child: Text('Time Descending'),
+                    value: 'Last 3 Months',
+                    child: Text('Last 3 Months'),
                   ),
+                  PopupMenuItem(
+                    value: 'Last 6 Months',
+                    child: Text('Last 6 Months'),
+                  ),
+                  PopupMenuItem(value: 'Last Year', child: Text('Last Year')),
                 ],
           ),
         ],
