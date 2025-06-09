@@ -1,6 +1,6 @@
 import 'package:intl/intl.dart';
 
-String formatDateTime(String rawDateTime) {
+String formatDateTimeHelper(String rawDateTime) {
   try {
     final dateTime = DateTime.parse(rawDateTime);
     final formattedDate = DateFormat("dd MMM yy").format(dateTime);
@@ -11,7 +11,7 @@ String formatDateTime(String rawDateTime) {
   }
 }
 
-String formatDate(DateTime date) {
+String formatDateHelper(DateTime date) {
   return "${date.day.toString().padLeft(2, '0')}-${date.month.toString().padLeft(2, '0')}-${date.year}";
 }
 

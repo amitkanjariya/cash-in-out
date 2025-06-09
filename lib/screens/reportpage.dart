@@ -9,6 +9,7 @@ import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
 import 'entryrow.dart';
+import 'package:intl/intl.dart';
 
 class ReportPage extends StatefulWidget {
   const ReportPage({super.key});
@@ -101,37 +102,38 @@ class _ReportPageState extends State<ReportPage> {
 
   void applyFilters() {
     DateTime now = DateTime.now();
-
-    switch (selectedFilter) {
-      case 'Today':
-        startDate = DateTime(now.year, now.month, now.day);
-        endDate = now;
-        break;
-      case 'Last Week':
-        startDate = now.subtract(const Duration(days: 7));
-        endDate = now;
-        break;
-      case 'Last Month':
-        startDate = DateTime(now.year, now.month - 1, now.day);
-        endDate = now;
-        break;
-      case 'Last 3 Months':
-        startDate = DateTime(now.year, now.month - 3, now.day);
-        endDate = now;
-        break;
-      case 'Last 6 Months':
-        startDate = DateTime(now.year, now.month - 6, now.day);
-        endDate = now;
-        break;
-      case 'Last Year':
-        startDate = DateTime(now.year - 1, now.month, now.day);
-        endDate = now;
-        break;
-      default:
-        startDate = null;
-        endDate = null;
+    if (selectedFilter != 'Custom') {
+      switch (selectedFilter) {
+        case 'All':
+          startDate = null;
+          endDate = null;
+          break;
+        case 'Today':
+          startDate = DateTime(now.year, now.month, now.day);
+          endDate = now;
+          break;
+        case 'Last Week':
+          startDate = now.subtract(const Duration(days: 7));
+          endDate = now;
+          break;
+        case 'Last Month':
+          startDate = DateTime(now.year, now.month - 1, now.day);
+          endDate = now;
+          break;
+        case 'Last 3 Months':
+          startDate = DateTime(now.year, now.month - 3, now.day);
+          endDate = now;
+          break;
+        case 'Last 6 Months':
+          startDate = DateTime(now.year, now.month - 6, now.day);
+          endDate = now;
+          break;
+        case 'Last Year':
+          startDate = DateTime(now.year - 1, now.month, now.day);
+          endDate = now;
+          break;
+      }
     }
-
     filteredTransactions =
         transactions.where((tx) {
           DateTime txDate = DateTime.tryParse(tx.createdAt) ?? DateTime(2000);
@@ -139,8 +141,9 @@ class _ReportPageState extends State<ReportPage> {
           // Date filter
           if (startDate != null && txDate.isBefore(startDate!)) return false;
           if (endDate != null &&
-              txDate.isAfter(endDate!.add(const Duration(days: 1))))
+              txDate.isAfter(endDate!.add(const Duration(days: 1)))) {
             return false;
+          }
 
           // Text search filter
           if (searchQuery.isNotEmpty &&
@@ -205,6 +208,7 @@ class _ReportPageState extends State<ReportPage> {
     if (picked != null) {
       setState(() {
         startDate = picked;
+        selectedFilter = 'Custom';
         applyFilters();
       });
     }
@@ -220,6 +224,7 @@ class _ReportPageState extends State<ReportPage> {
     if (picked != null) {
       setState(() {
         endDate = picked;
+        selectedFilter = 'Custom';
         applyFilters();
       });
     }
@@ -235,47 +240,233 @@ class _ReportPageState extends State<ReportPage> {
     final font = await PdfGoogleFonts.notoSansRegular();
     final boldFont = await PdfGoogleFonts.notoSansBold();
 
+    final now = DateTime.now();
+    final formattedNow =
+        "${DateFormat.jm().format(now)} | ${DateFormat("dd MMM yy").format(now)}";
+    String dateRange;
+    if (startDate == null && endDate == null) {
+      dateRange = "All Transactions";
+    } else if (startDate == null) {
+      dateRange = "Until ${DateFormat("dd MMM yy").format(endDate!)}";
+    } else if (endDate == null) {
+      dateRange = "From ${DateFormat("dd MMM yy").format(startDate!)}";
+    } else {
+      dateRange =
+          "${DateFormat("dd MMM yy").format(startDate!)} - ${DateFormat("dd MMM yy").format(endDate!)}";
+    }
+
+    double totalDebit = 0;
+    double totalCredit = 0;
+
+    for (var tx in filteredTransactions) {
+      final amount = double.tryParse(tx.amount) ?? 0;
+      if (tx.type == 'minus') {
+        totalDebit += amount;
+      } else {
+        totalCredit += amount;
+      }
+    }
+
+    final netBalance = totalCredit - totalDebit;
+
     pdf.addPage(
       pw.MultiPage(
         pageFormat: PdfPageFormat.a4,
+        margin: const pw.EdgeInsets.all(7),
+        header:
+            (context) => pw.Container(
+              padding: const pw.EdgeInsets.symmetric(
+                horizontal: 8,
+                vertical: 5,
+              ),
+              color: PdfColors.blue900,
+              child: pw.Row(
+                mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                children: [
+                  pw.Text(
+                    '+91$userPhone',
+                    style: pw.TextStyle(
+                      font: font,
+                      fontSize: 12,
+                      color: PdfColors.white,
+                    ),
+                  ),
+                  pw.Text(
+                    'CashInOut',
+                    style: pw.TextStyle(
+                      font: boldFont,
+                      fontSize: 16,
+                      color: PdfColors.white,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+        footer:
+            (context) => pw.Container(
+              margin: const pw.EdgeInsets.only(top: 16),
+              child: pw.Row(
+                mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                children: [
+                  pw.Text(
+                    'Report Generated : $formattedNow',
+                    style: pw.TextStyle(font: font, fontSize: 10),
+                  ),
+                  pw.Text(
+                    'Page ${context.pageNumber} of ${context.pagesCount}',
+                    style: pw.TextStyle(font: font, fontSize: 10),
+                  ),
+                ],
+              ),
+            ),
         build:
-            (pw.Context context) => [
-              pw.Text(
-                'Transaction Report',
-                style: pw.TextStyle(font: boldFont, fontSize: 24),
+            (context) => [
+              pw.SizedBox(height: 20),
+
+              // Title & Date Range
+              pw.Center(
+                child: pw.Text(
+                  'Account Statement',
+                  style: pw.TextStyle(font: boldFont, fontSize: 18),
+                ),
+              ),
+              pw.SizedBox(height: 4),
+              pw.Center(
+                child: pw.Text(
+                  '($dateRange)',
+                  style: pw.TextStyle(font: font, fontSize: 11),
+                ),
               ),
               pw.SizedBox(height: 16),
-              pw.Table.fromTextArray(
-                headers: ['Name', 'Date', 'You Gave', 'You Got'],
-                data:
-                    filteredTransactions.map((tx) {
-                      return [
-                        tx.contactName,
-                        formatDateTime(tx.createdAt),
-                        tx.type == 'minus' ? "₹${tx.amount}" : '',
-                        tx.type == 'plus' ? "₹${tx.amount}" : '',
-                      ];
-                    }).toList(),
-                headerStyle: pw.TextStyle(font: boldFont),
-                cellStyle: pw.TextStyle(font: font),
+
+              // Summary Boxes
+              pw.Container(
+                decoration: pw.BoxDecoration(
+                  border: pw.Border.all(color: PdfColors.grey400),
+                  borderRadius: pw.BorderRadius.circular(4),
+                ),
+                child: pw.Row(
+                  mainAxisAlignment: pw.MainAxisAlignment.spaceEvenly,
+                  children: [
+                    _buildSummaryBox(
+                      "Total Debit(-)",
+                      totalDebit,
+                      font,
+                      boldFont,
+                      color: PdfColors.red800,
+                    ),
+                    _buildSummaryBox(
+                      "Total Credit(+)",
+                      totalCredit,
+                      font,
+                      boldFont,
+                      color: PdfColors.green800,
+                    ),
+                    _buildSummaryBox(
+                      "Net Balance",
+                      netBalance,
+                      font,
+                      boldFont,
+                      color:
+                          netBalance >= 0
+                              ? PdfColors.green800
+                              : PdfColors.red800,
+                      suffix: netBalance >= 0 ? " Cr" : " Dr",
+                    ),
+                  ],
+                ),
               ),
-              pw.SizedBox(height: 24),
+              pw.SizedBox(height: 10),
+
               pw.Text(
-                "Total You Gave: ₹ ${totalGive.toStringAsFixed(2)}",
-                style: pw.TextStyle(font: font, color: PdfColors.red),
+                "No. of Entries: ${filteredTransactions.length}",
+                style: pw.TextStyle(font: font, fontSize: 10),
               ),
-              pw.Text(
-                "Total You Got: ₹ ${totalGet.toStringAsFixed(2)}",
-                style: pw.TextStyle(font: font, color: PdfColors.green),
+
+              // Table
+              pw.Container(
+                margin: const pw.EdgeInsets.only(top: 10),
+                child: pw.Table.fromTextArray(
+                  headerStyle: pw.TextStyle(font: boldFont, fontSize: 11),
+                  cellStyle: pw.TextStyle(font: font, fontSize: 10),
+                  headerDecoration: const pw.BoxDecoration(
+                    color: PdfColors.grey200,
+                  ),
+                  cellAlignment: pw.Alignment.centerLeft,
+                  columnWidths: {
+                    0: const pw.FlexColumnWidth(1.5),
+                    1: const pw.FlexColumnWidth(3),
+                    2: const pw.FlexColumnWidth(3),
+                    3: const pw.FlexColumnWidth(2),
+                    4: const pw.FlexColumnWidth(2),
+                  },
+                  headers: ["Date", "Name", "Details", "Debit(-)", "Credit(+)"],
+                  data:
+                      filteredTransactions.map((tx) {
+                        final date = DateFormat(
+                          'dd MMM yy',
+                        ).format(DateTime.parse(tx.createdAt));
+                        final isDebit = tx.type == 'minus';
+                        final debit = isDebit ? tx.amount : '';
+                        final credit = !isDebit ? tx.amount : '';
+                        return [date, tx.contactName, tx.detail, debit, credit];
+                      }).toList(),
+                  cellDecoration: (columnIndex, rowIndex, cellData) {
+                    if (rowIndex == 0) {
+                      return const pw.BoxDecoration(
+                        color: PdfColors.blueGrey100,
+                      );
+                    }
+                    if (columnIndex == 3) {
+                      return const pw.BoxDecoration(color: PdfColors.pink50);
+                    }
+                    if (columnIndex == 4) {
+                      return const pw.BoxDecoration(color: PdfColors.green50);
+                    }
+                    return const pw.BoxDecoration();
+                  },
+                ),
               ),
-              pw.Text(
-                "Net Balance: ₹ ${(totalGet - totalGive).toStringAsFixed(2)}",
-                style: pw.TextStyle(
-                  font: boldFont,
-                  color:
-                      (totalGet - totalGive) >= 0
-                          ? PdfColors.green
-                          : PdfColors.red,
+
+              // Grand Total Row
+              pw.Container(
+                margin: const pw.EdgeInsets.only(top: 4),
+                child: pw.Row(
+                  mainAxisAlignment: pw.MainAxisAlignment.start,
+                  children: [
+                    pw.Container(
+                      padding: const pw.EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 4,
+                      ),
+                      color: PdfColors.grey200,
+                      child: pw.Row(
+                        children: [
+                          pw.Text(
+                            "Grand Total  ",
+                            style: pw.TextStyle(font: boldFont, fontSize: 10),
+                          ),
+                          pw.Text(
+                            totalDebit.toStringAsFixed(2),
+                            style: pw.TextStyle(
+                              font: boldFont,
+                              fontSize: 10,
+                              color: PdfColors.red,
+                            ),
+                          ),
+                          pw.SizedBox(width: 20),
+                          pw.Text(
+                            totalCredit.toStringAsFixed(2),
+                            style: pw.TextStyle(
+                              font: boldFont,
+                              fontSize: 10,
+                              color: PdfColors.green,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ],
@@ -285,58 +476,31 @@ class _ReportPageState extends State<ReportPage> {
     return pdf;
   }
 
-  Future<void> generateAndDownloadPDF() async {
-    final pdf = pw.Document();
-
-    final font = await PdfGoogleFonts.notoSansRegular();
-    final boldFont = await PdfGoogleFonts.notoSansBold();
-
-    pdf.addPage(
-      pw.MultiPage(
-        pageFormat: PdfPageFormat.a4,
-        build:
-            (pw.Context context) => [
-              pw.Text(
-                'Transaction Report',
-                style: pw.TextStyle(font: boldFont, fontSize: 24),
-              ),
-              pw.SizedBox(height: 16),
-              pw.Table.fromTextArray(
-                headers: ['Name', 'Date', 'You Gave', 'You Got'],
-                data:
-                    filteredTransactions.map((tx) {
-                      return [
-                        tx.contactName,
-                        formatDateTime(tx.createdAt),
-                        tx.type == 'minus' ? "₹${tx.amount}" : '',
-                        tx.type == 'plus' ? "₹${tx.amount}" : '',
-                      ];
-                    }).toList(),
-                headerStyle: pw.TextStyle(font: boldFont),
-                cellStyle: pw.TextStyle(font: font),
-              ),
-              pw.SizedBox(height: 24),
-              pw.Text(
-                "Total You Gave: ₹ ${totalGive.toStringAsFixed(2)}",
-                style: pw.TextStyle(font: font, color: PdfColors.red),
-              ),
-              pw.Text(
-                "Total You Got: ₹ ${totalGet.toStringAsFixed(2)}",
-                style: pw.TextStyle(font: font, color: PdfColors.green),
-              ),
-              pw.Text(
-                "Net Balance: ₹ ${(totalGet - totalGive).toStringAsFixed(2)}",
-                style: pw.TextStyle(
-                  font: boldFont,
-                  color:
-                      (totalGet - totalGive) >= 0
-                          ? PdfColors.green
-                          : PdfColors.red,
-                ),
-              ),
-            ],
+  pw.Widget _buildSummaryBox(
+    String title,
+    double amount,
+    pw.Font font,
+    pw.Font boldFont, {
+    required PdfColor color,
+    String suffix = "",
+  }) {
+    return pw.Container(
+      padding: const pw.EdgeInsets.symmetric(vertical: 8, horizontal: 10),
+      child: pw.Column(
+        children: [
+          pw.Text(title, style: pw.TextStyle(font: font, fontSize: 10)),
+          pw.SizedBox(height: 4),
+          pw.Text(
+            "${amount.toStringAsFixed(2)}$suffix",
+            style: pw.TextStyle(font: boldFont, fontSize: 12, color: color),
+          ),
+        ],
       ),
     );
+  }
+
+  Future<void> generateAndDownloadPDF() async {
+    final pdf = await _buildPDF();
 
     await Printing.layoutPdf(
       onLayout: (PdfPageFormat format) async => pdf.save(),
@@ -379,7 +543,7 @@ class _ReportPageState extends State<ReportPage> {
               onPressed: pickStartDate,
               icon: const Icon(Icons.calendar_today, size: 16),
               label: Text(
-                startDate == null ? 'Start Date' : formatDate(startDate!),
+                startDate == null ? 'Start Date' : formatDateHelper(startDate!),
               ),
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.white,
@@ -392,7 +556,9 @@ class _ReportPageState extends State<ReportPage> {
             child: ElevatedButton.icon(
               onPressed: pickEndDate,
               icon: const Icon(Icons.calendar_today, size: 16),
-              label: Text(endDate == null ? 'End Date' : formatDate(endDate!)),
+              label: Text(
+                endDate == null ? 'End Date' : formatDateHelper(endDate!),
+              ),
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.white,
                 foregroundColor: Colors.black,
@@ -519,7 +685,7 @@ class _ReportPageState extends State<ReportPage> {
           final tx = filteredTransactions[index];
           return EntryRow(
             name: tx.contactName,
-            date: formatDateTime(tx.createdAt),
+            date: formatDateTimeHelper(tx.createdAt),
             gave: tx.type == 'minus' ? tx.amount : '',
             got: tx.type == 'plus' ? tx.amount : '',
           );
@@ -529,13 +695,23 @@ class _ReportPageState extends State<ReportPage> {
   }
 
   Widget buildBottomButtons() {
+    final isDisabled = filteredTransactions.isEmpty;
+    void showNoTransactionMessage(String action) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('No transactions to $action')));
+    }
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       child: Row(
         children: [
           Expanded(
             child: ElevatedButton.icon(
-              onPressed: generateAndDownloadPDF,
+              onPressed:
+                  isDisabled
+                      ? () => showNoTransactionMessage('download')
+                      : generateAndDownloadPDF,
               icon: const Icon(Icons.download),
               label: const Text('Download'),
               style: ElevatedButton.styleFrom(backgroundColor: Colors.blue),
@@ -544,7 +720,10 @@ class _ReportPageState extends State<ReportPage> {
           const SizedBox(width: 12),
           Expanded(
             child: ElevatedButton.icon(
-              onPressed: sharePDF,
+              onPressed:
+                  isDisabled
+                      ? () => showNoTransactionMessage('share')
+                      : sharePDF,
               icon: const Icon(Icons.share),
               label: const Text('Share'),
               style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
