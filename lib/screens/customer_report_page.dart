@@ -348,7 +348,7 @@ class _CustomerReportPageState extends State<CustomerReportPage> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text(formatDateTime(e['date'])),
+                            Text(formatDateTimeHelper(e['date'])),
                             Text(
                               'Bal. ₹ ${e['balance']}',
                               style: TextStyle(

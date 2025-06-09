@@ -594,7 +594,7 @@ class EntryRow extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  formatDateTime(date),
+                  formatDateTimeHelper(date),
                   style: const TextStyle(fontSize: 12),
                 ),
                 const SizedBox(height: 4),

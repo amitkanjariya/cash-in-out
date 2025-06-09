@@ -447,7 +447,7 @@ class CustomerTile extends StatelessWidget {
         ),
         title: Text(name, style: const TextStyle(fontWeight: FontWeight.w600)),
         subtitle: Text(
-          formatDateTime(time),
+          formatDateTimeHelper(time),
           style: const TextStyle(fontSize: 12),
         ),
         trailing: Column(
