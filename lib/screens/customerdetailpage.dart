@@ -9,6 +9,7 @@ import 'dart:convert';
 import 'package:url_launcher/url_launcher.dart';
 import 'customerprofilepage.dart';
 import 'customer_report_page.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
 class CustomerDetailPage extends StatefulWidget {
   final String userId;
@@ -156,9 +157,9 @@ class _CustomerDetailPageState extends State<CustomerDetailPage> {
     double diff = (totalGave - totalGot).abs();
 
     if (totalGave > totalGot) {
-      message += 'you have to give ₹${diff.toStringAsFixed(2)}.';
+      message += 'you have to give ₹${formatAmount(diff.toStringAsFixed(2))}.';
     } else if (totalGot > totalGave) {
-      message += 'you have to get ₹${diff.toStringAsFixed(2)}.';
+      message += 'you have to get ₹${formatAmount(diff.toStringAsFixed(2))}.';
     } else {
       message += 'your account is settled.';
     }
@@ -188,9 +189,9 @@ class _CustomerDetailPageState extends State<CustomerDetailPage> {
     double diff = (totalGave - totalGot).abs();
 
     if (totalGave > totalGot) {
-      message += 'you have to give ₹${diff.toStringAsFixed(2)}.';
+      message += 'you have to give ₹${formatAmount(diff.toStringAsFixed(2))}.';
     } else if (totalGot > totalGave) {
-      message += 'you have to get ₹${diff.toStringAsFixed(2)}.';
+      message += 'you have to get ₹${formatAmount(diff.toStringAsFixed(2))}.';
     } else {
       message += 'your account is settled.';
     }
@@ -291,7 +292,7 @@ class _CustomerDetailPageState extends State<CustomerDetailPage> {
                     children: [
                       const Text('You Gave', style: TextStyle(fontSize: 16)),
                       Text(
-                        '₹ ${diff.toStringAsFixed(2)}',
+                        '₹ ${formatAmount(diff.toStringAsFixed(2))}',
                         style: const TextStyle(
                           color: Colors.red,
                           fontSize: 20,
@@ -307,7 +308,7 @@ class _CustomerDetailPageState extends State<CustomerDetailPage> {
                     children: [
                       const Text('You Got', style: TextStyle(fontSize: 16)),
                       Text(
-                        '₹ ${diff.toStringAsFixed(2)}',
+                        '₹ ${formatAmount(diff.toStringAsFixed(2))}',
                         style: const TextStyle(
                           color: Colors.green,
                           fontSize: 20,
@@ -354,11 +355,10 @@ class _CustomerDetailPageState extends State<CustomerDetailPage> {
                     label: 'Report',
                   ),
                 ),
-                const IconWithLabel(icon: Icons.payments, label: 'Payments'),
                 GestureDetector(
                   onTap: _sendWhatsApp,
                   child: const IconWithLabel(
-                    icon: Icons.payments,
+                    icon: FontAwesomeIcons.whatsapp,
                     label: 'WhatsApp',
                   ),
                 ),
@@ -385,12 +385,14 @@ class _CustomerDetailPageState extends State<CustomerDetailPage> {
                 Expanded(
                   child: Text(
                     'YOU GAVE',
+                    textAlign: TextAlign.right,
                     style: TextStyle(fontWeight: FontWeight.bold),
                   ),
                 ),
                 Expanded(
                   child: Text(
                     'YOU GOT',
+                    textAlign: TextAlign.right,
                     style: TextStyle(fontWeight: FontWeight.bold),
                   ),
                 ),
@@ -507,8 +509,19 @@ class _CustomerDetailPageState extends State<CustomerDetailPage> {
                     ),
                   );
                 },
-                style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
-                child: const Text('YOU GAVE ₹'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.red,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                ),
+                child: const Text(
+                  'YOU GAVE ₹',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
               ),
             ),
             const SizedBox(width: 12),
@@ -522,8 +535,19 @@ class _CustomerDetailPageState extends State<CustomerDetailPage> {
                     ),
                   );
                 },
-                style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
-                child: const Text('YOU GOT ₹'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.green,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                ),
+                child: const Text(
+                  'YOU GOT ₹',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
               ),
             ),
           ],
@@ -571,14 +595,13 @@ class EntryRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final double parsedBalance = double.tryParse(balance) ?? 0.0;
 
-    // Decide colors based on balance sign
     final Color bgColor =
         parsedBalance < 0 ? Colors.red.shade50 : Colors.green.shade50;
     final Color textColor = parsedBalance < 0 ? Colors.red : Colors.green;
 
     return Container(
       margin: const EdgeInsets.symmetric(vertical: 4, horizontal: 12),
-      padding: const EdgeInsets.all(12),
+
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(8),
@@ -590,55 +613,60 @@ class EntryRow extends StatelessWidget {
         children: [
           Expanded(
             flex: 2,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  formatDateTimeHelper(date),
-                  style: const TextStyle(fontSize: 12),
-                ),
-                const SizedBox(height: 4),
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 6,
-                    vertical: 2,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    formatDateTimeHelper(date),
+                    style: const TextStyle(fontSize: 12),
                   ),
-                  decoration: BoxDecoration(
-                    color: bgColor,
-                    borderRadius: BorderRadius.circular(4),
-                  ),
-                  child: Text(
-                    'Bal. ${parsedBalance.abs()}',
-                    style: TextStyle(
-                      fontSize: 10,
-                      color: textColor,
-                      fontWeight: FontWeight.w600,
+                  const SizedBox(height: 4),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 6,
+                      vertical: 2,
                     ),
-                  ),
-                ),
-                if (note != null)
-                  Padding(
-                    padding: const EdgeInsets.only(top: 4),
+                    decoration: BoxDecoration(
+                      color: bgColor,
+                      borderRadius: BorderRadius.circular(4),
+                    ),
                     child: Text(
-                      note!,
-                      style: const TextStyle(fontSize: 12, color: Colors.black),
+                      'Bal. ${formatAmount(parsedBalance.abs().toString())}',
+                      style: TextStyle(
+                        fontSize: 10,
+                        color: textColor,
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
                   ),
-              ],
-            ),
-          ),
-          Expanded(
-            child: Text(
-              gave,
-              style: const TextStyle(
-                color: Colors.red,
-                fontWeight: FontWeight.bold,
+                ],
               ),
             ),
           ),
+
+          /// YOU GAVE with red background
+          Expanded(
+            child: Container(
+              color: const Color(0xFFFFEBEE),
+              padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 20),
+              alignment: Alignment.center,
+              child: Text(
+                formatAmount(gave),
+                style: const TextStyle(
+                  color: Colors.red,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+          ),
+
+          /// YOU GOT (unchanged)
           Expanded(
             child: Text(
-              got,
+              formatAmount(got),
+              textAlign: TextAlign.center,
               style: const TextStyle(
                 color: Colors.green,
                 fontWeight: FontWeight.bold,

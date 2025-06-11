@@ -126,63 +126,75 @@ class _CustomerProfilePageState extends State<CustomerProfilePage> {
           icon: const Icon(Icons.arrow_back, color: Colors.white),
           onPressed: () => Navigator.pop(context),
         ),
-        title: const Text('Customer Profile'),
+        title: const Text(
+          'Customer Profile',
+          style: TextStyle(color: Colors.white),
+        ),
       ),
       body: SingleChildScrollView(
-        child: Column(
-          children: [
-            const SizedBox(height: 24),
-            // Profile Image Picker and Preview
-            GestureDetector(
-              onTap: _pickImage,
-              child: CircleAvatar(
-                radius: 60,
-                backgroundImage:
-                    _imageFile != null
-                        ? FileImage(_imageFile!)
-                        : (_profileImageUrl != null
-                            ? NetworkImage(_profileImageUrl!) as ImageProvider
-                            : const AssetImage('assets/images/logo1.png')),
-              ),
-            ),
-            const SizedBox(height: 12),
-            const Text(
-              "Tap image to change",
-              style: TextStyle(color: Colors.grey),
-            ),
-
-            const SizedBox(height: 20),
-
-            TextField(
-              controller: _nameController,
-              inputFormatters: [_onlyLetters],
-              decoration: const InputDecoration(
-                labelText: 'Your Name',
-                border: OutlineInputBorder(),
-              ),
-            ),
-            const SizedBox(height: 16),
-            TextField(
-              controller: _phoneController,
-              enabled: false,
-              decoration: const InputDecoration(
-                labelText: 'Phone Number',
-                border: OutlineInputBorder(),
-              ),
-            ),
-            const SizedBox(height: 16),
-            SizedBox(
-              width: double.infinity,
-              height: 48,
-              child: ElevatedButton(
-                onPressed: _saveCustomerProfile,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.blue[800],
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            children: [
+              const SizedBox(height: 24),
+              // Profile Image Picker and Preview
+              GestureDetector(
+                onTap: _pickImage,
+                child: CircleAvatar(
+                  radius: 60,
+                  backgroundImage:
+                      _imageFile != null
+                          ? FileImage(_imageFile!)
+                          : (_profileImageUrl != null
+                              ? NetworkImage(_profileImageUrl!) as ImageProvider
+                              : const AssetImage('assets/images/logo1.png')),
                 ),
-                child: const Text('Save'),
               ),
-            ),
-          ],
+              const SizedBox(height: 12),
+              const Text(
+                "Tap image to change",
+                style: TextStyle(color: Colors.grey),
+              ),
+
+              const SizedBox(height: 20),
+
+              TextField(
+                controller: _nameController,
+                inputFormatters: [_onlyLetters],
+                decoration: const InputDecoration(
+                  labelText: 'Your Name',
+                  border: OutlineInputBorder(),
+                ),
+              ),
+              const SizedBox(height: 16),
+              TextField(
+                controller: _phoneController,
+                enabled: false,
+                decoration: const InputDecoration(
+                  labelText: 'Phone Number',
+                  border: OutlineInputBorder(),
+                ),
+              ),
+              const SizedBox(height: 16),
+              SizedBox(
+                width: double.infinity,
+                height: 48,
+                child: ElevatedButton(
+                  onPressed: _saveCustomerProfile,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.blue[800],
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                  ),
+                  child: const Text(
+                    'Save',
+                    style: TextStyle(fontSize: 16, color: Colors.white),
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );

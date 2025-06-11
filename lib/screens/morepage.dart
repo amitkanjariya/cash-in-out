@@ -78,9 +78,17 @@ class _MorePageState extends State<MorePage> {
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Colors.blue[800],
-        title: const Text('practice'),
-        leading: const Icon(Icons.menu_book, color: Colors.white),
+        centerTitle: true, // ✅ This centers the title
+        title: const Text(
+          'Profile',
+          style: TextStyle(
+            fontSize: 25,
+            color: Colors.white,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
       ),
+
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
@@ -160,6 +168,9 @@ class _MorePageState extends State<MorePage> {
               backgroundColor: Colors.red,
               foregroundColor: Colors.white,
               padding: const EdgeInsets.symmetric(vertical: 12),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
             ),
           ),
         ],

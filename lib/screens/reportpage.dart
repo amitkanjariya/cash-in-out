@@ -407,8 +407,8 @@ class _ReportPageState extends State<ReportPage> {
                           'dd MMM yy',
                         ).format(DateTime.parse(tx.createdAt));
                         final isDebit = tx.type == 'minus';
-                        final debit = isDebit ? tx.amount : '';
-                        final credit = !isDebit ? tx.amount : '';
+                        final debit = isDebit ? formatAmount(tx.amount) : '';
+                        final credit = !isDebit ? formatAmount(tx.amount) : '';
                         return [date, tx.contactName, tx.detail, debit, credit];
                       }).toList(),
                   cellDecoration: (columnIndex, rowIndex, cellData) {
@@ -447,7 +447,7 @@ class _ReportPageState extends State<ReportPage> {
                             style: pw.TextStyle(font: boldFont, fontSize: 10),
                           ),
                           pw.Text(
-                            totalDebit.toStringAsFixed(2),
+                            formatAmount(totalDebit.toStringAsFixed(2)),
                             style: pw.TextStyle(
                               font: boldFont,
                               fontSize: 10,
@@ -456,7 +456,7 @@ class _ReportPageState extends State<ReportPage> {
                           ),
                           pw.SizedBox(width: 20),
                           pw.Text(
-                            totalCredit.toStringAsFixed(2),
+                            formatAmount(totalCredit.toStringAsFixed(2)),
                             style: pw.TextStyle(
                               font: boldFont,
                               fontSize: 10,
@@ -491,7 +491,7 @@ class _ReportPageState extends State<ReportPage> {
           pw.Text(title, style: pw.TextStyle(font: font, fontSize: 10)),
           pw.SizedBox(height: 4),
           pw.Text(
-            "${amount.toStringAsFixed(2)}$suffix",
+            "${formatAmount(amount.toString())}$suffix",
             style: pw.TextStyle(font: boldFont, fontSize: 12, color: color),
           ),
         ],
@@ -513,7 +513,6 @@ class _ReportPageState extends State<ReportPage> {
       backgroundColor: Colors.grey[100],
       appBar: AppBar(
         backgroundColor: Colors.blue[800],
-
         title: const Text('View Report', style: TextStyle(color: Colors.white)),
         centerTitle: true,
       ),
@@ -522,6 +521,8 @@ class _ReportPageState extends State<ReportPage> {
           buildTopCard(context),
           buildSearchbar(),
           buildBalanceCard(),
+          const Divider(height: 1),
+
           buildStickyHeaderSummary(),
           buildHeaderRow(),
           const Divider(height: 1),
@@ -535,7 +536,10 @@ class _ReportPageState extends State<ReportPage> {
   Widget buildTopCard(BuildContext context) {
     return Container(
       color: Colors.blue[800],
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.symmetric(
+        vertical: 0,
+        horizontal: 8,
+      ).copyWith(bottom: 8),
       child: Row(
         children: [
           Expanded(
@@ -548,10 +552,13 @@ class _ReportPageState extends State<ReportPage> {
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.white,
                 foregroundColor: Colors.black,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
               ),
             ),
           ),
-          const SizedBox(width: 12),
+          const SizedBox(width: 8),
           Expanded(
             child: ElevatedButton.icon(
               onPressed: pickEndDate,
@@ -562,6 +569,9 @@ class _ReportPageState extends State<ReportPage> {
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.white,
                 foregroundColor: Colors.black,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
               ),
             ),
           ),
@@ -573,8 +583,7 @@ class _ReportPageState extends State<ReportPage> {
   Widget buildBalanceCard() {
     return Container(
       width: double.infinity,
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-      padding: const EdgeInsets.all(12),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(8),
@@ -588,7 +597,7 @@ class _ReportPageState extends State<ReportPage> {
             style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
           ),
           Text(
-            "₹ ${(totalGet - totalGive).toStringAsFixed(2)}",
+            "₹ ${formatAmount((totalGet - totalGive).abs().toStringAsFixed(2))}",
             style: TextStyle(
               fontSize: 18,
               color: (totalGet - totalGive) >= 0 ? Colors.green : Colors.red,
@@ -603,20 +612,37 @@ class _ReportPageState extends State<ReportPage> {
   Widget buildStickyHeaderSummary() {
     return Container(
       color: Colors.white,
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          buildSummaryColumn("Total Entries", "${filteredTransactions.length}"),
-          buildSummaryColumn(
-            "You Gave",
-            "₹ ${totalGive.toStringAsFixed(0)}",
-            color: Colors.red,
+          // ENTRIES (left-aligned)
+          Expanded(
+            flex: 2,
+            child: buildSummaryColumn(
+              "Total Entries",
+              "${filteredTransactions.length}",
+            ),
           ),
-          buildSummaryColumn(
-            "You Got",
-            "₹ ${totalGet.toStringAsFixed(0)}",
-            color: Colors.green,
+          // YOU GAVE (center-aligned)
+          Expanded(
+            child: Center(
+              child: buildSummaryColumn(
+                "You Gave",
+                "₹ ${formatAmount(totalGive.toStringAsFixed(0))}",
+                color: Colors.red,
+              ),
+            ),
+          ),
+          // YOU GOT (right-aligned)
+          Expanded(
+            child: Align(
+              alignment: Alignment.centerRight,
+              child: buildSummaryColumn(
+                "You Got",
+                "₹ ${formatAmount(totalGet.toStringAsFixed(0))}",
+                color: Colors.green,
+              ),
+            ),
           ),
         ],
       ),
@@ -663,9 +689,12 @@ class _ReportPageState extends State<ReportPage> {
             ),
           ),
           Expanded(
-            child: Text(
-              'YOU GOT',
-              style: TextStyle(fontWeight: FontWeight.bold),
+            child: Align(
+              alignment: Alignment.centerRight,
+              child: Text(
+                'YOU GOT',
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
             ),
           ),
         ],
@@ -686,8 +715,8 @@ class _ReportPageState extends State<ReportPage> {
           return EntryRow(
             name: tx.contactName,
             date: formatDateTimeHelper(tx.createdAt),
-            gave: tx.type == 'minus' ? tx.amount : '',
-            got: tx.type == 'plus' ? tx.amount : '',
+            gave: tx.type == 'minus' ? formatAmount(tx.amount) : '',
+            got: tx.type == 'plus' ? formatAmount(tx.amount) : '',
           );
         },
       );
@@ -712,9 +741,17 @@ class _ReportPageState extends State<ReportPage> {
                   isDisabled
                       ? () => showNoTransactionMessage('download')
                       : generateAndDownloadPDF,
-              icon: const Icon(Icons.download),
-              label: const Text('Download'),
-              style: ElevatedButton.styleFrom(backgroundColor: Colors.blue),
+              icon: const Icon(Icons.download, color: Colors.white),
+              label: const Text(
+                'Download',
+                style: TextStyle(color: Colors.white),
+              ),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.blue,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+              ),
             ),
           ),
           const SizedBox(width: 12),
@@ -724,9 +761,14 @@ class _ReportPageState extends State<ReportPage> {
                   isDisabled
                       ? () => showNoTransactionMessage('share')
                       : sharePDF,
-              icon: const Icon(Icons.share),
-              label: const Text('Share'),
-              style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
+              icon: const Icon(Icons.share, color: Colors.white),
+              label: const Text('Share', style: TextStyle(color: Colors.white)),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.green,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+              ),
             ),
           ),
         ],
@@ -736,7 +778,7 @@ class _ReportPageState extends State<ReportPage> {
 
   Widget buildSearchbar() {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       child: Row(
         children: [
           Expanded(

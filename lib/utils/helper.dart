@@ -34,9 +34,18 @@ String formatDateWithRelativeLabel(DateTime date) {
   if (difference == 0) {
     label = "Today";
   } else if (difference == 1) {
-    label = "1 day ago";
-  } else {
+    label = "Yesterday";
+  } else if (difference < 7) {
     label = "$difference days ago";
+  } else if (difference < 30) {
+    final weeks = (difference / 7).floor();
+    label = weeks == 1 ? "1 week ago" : "$weeks weeks ago";
+  } else if (difference < 365) {
+    final months = (difference / 30).floor();
+    label = months == 1 ? "1 month ago" : "$months months ago";
+  } else {
+    final years = (difference / 365).floor();
+    label = years == 1 ? "1 year ago" : "$years years ago";
   }
 
   return "$baseDate · $label";
@@ -68,5 +77,16 @@ String getInitials(String name) {
     return (words[0][0] + words[1][0]).toUpperCase();
   } else {
     return name.trim().substring(0, name.length >= 2 ? 2 : 1).toUpperCase();
+  }
+}
+
+String formatAmount(String amount) {
+  try {
+    // Remove any existing commas and parse as double
+    final number = double.parse(amount.replaceAll(',', ''));
+    final formatter = NumberFormat('#,##,##,###.##', 'en_IN');
+    return formatter.format(number);
+  } catch (e) {
+    return amount; // fallback if parsing fails
   }
 }

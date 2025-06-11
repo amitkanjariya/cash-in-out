@@ -17,7 +17,7 @@ class EntryRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+      padding: const EdgeInsets.symmetric(horizontal: 16),
       decoration: BoxDecoration(
         color: Colors.white,
         border: Border(
@@ -50,13 +50,17 @@ class EntryRow extends StatelessWidget {
           ),
           Expanded(
             flex: 1,
-            child: Text(
-              gave,
-              textAlign: TextAlign.right,
-              style: const TextStyle(
-                color: Colors.red,
-                fontWeight: FontWeight.w600,
-                fontSize: 14,
+            child: Container(
+              padding: const EdgeInsets.symmetric(vertical: 15, horizontal: 8),
+              decoration: BoxDecoration(color: Colors.red.shade50),
+              child: Text(
+                gave,
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  color: Colors.red,
+                  fontWeight: FontWeight.w600,
+                  fontSize: 14,
+                ),
               ),
             ),
           ),
@@ -65,7 +69,7 @@ class EntryRow extends StatelessWidget {
             flex: 1,
             child: Text(
               got,
-              textAlign: TextAlign.right,
+              textAlign: TextAlign.center,
               style: const TextStyle(
                 color: Colors.green,
                 fontWeight: FontWeight.w600,

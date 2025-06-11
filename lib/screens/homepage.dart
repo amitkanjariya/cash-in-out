@@ -252,7 +252,7 @@ class _CustomerListPageState extends State<CustomerListPage> {
                           final transaction = filteredTransactions[index];
                           return CustomerTile(
                             name: transaction.contactName,
-                            amount: '₹ ${transaction.amount}',
+                            amount: '₹ ${formatAmount(transaction.amount)}',
                             subtitle:
                                 transaction.type == 'plus'
                                     ? "You'll Get"
@@ -306,13 +306,13 @@ class _CustomerListPageState extends State<CustomerListPage> {
             children: [
               buildBalanceCard(
                 'You will give',
-                '₹ ${totalGive.toStringAsFixed(2)}',
+                '₹ ${formatAmount(totalGive.toString())}',
                 Colors.green,
               ),
               Container(width: 1, height: 40, color: Colors.grey[300]),
               buildBalanceCard(
                 'You will get',
-                '₹ ${totalGet.toStringAsFixed(2)}',
+                '₹ ${formatAmount(totalGet.toString())}',
                 Colors.red,
               ),
             ],

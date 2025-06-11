@@ -17,7 +17,10 @@ class _AddCustomerPageState extends State<AddCustomerPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Add Customer'),
+        title: const Text(
+          'Add Customer',
+          style: TextStyle(fontSize: 20, color: Colors.white),
+        ),
         backgroundColor: Colors.blue,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
@@ -82,8 +85,14 @@ class _AddCustomerPageState extends State<AddCustomerPage> {
                   },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.blue[300],
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
                   ),
-                  child: const Text('Save'),
+                  child: const Text(
+                    'Save',
+                    style: TextStyle(fontSize: 16, color: Colors.white),
+                  ),
                 ),
               ),
             ],

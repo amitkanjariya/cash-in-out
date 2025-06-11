@@ -265,7 +265,7 @@ class _CustomerReportPageState extends State<CustomerReportPage> {
               children: [
                 const Text('Net Balance', style: TextStyle(fontSize: 18)),
                 Text(
-                  '₹ ${netBalance.abs().toStringAsFixed(0)}',
+                  '₹ ${formatAmount(netBalance.abs().toStringAsFixed(0))}',
                   style: TextStyle(
                     fontSize: 18,
                     color: netBalance >= 0 ? Colors.red : Colors.green,
@@ -293,7 +293,7 @@ class _CustomerReportPageState extends State<CustomerReportPage> {
                       style: TextStyle(color: Colors.red, fontSize: 12),
                     ),
                     Text(
-                      '₹ ${totalGave.toStringAsFixed(0)}',
+                      '₹ ${formatAmount(totalGave.toStringAsFixed(0))}',
                       style: const TextStyle(color: Colors.red),
                     ),
                   ],
@@ -307,7 +307,7 @@ class _CustomerReportPageState extends State<CustomerReportPage> {
                       style: TextStyle(color: Colors.green, fontSize: 12),
                     ),
                     Text(
-                      '₹ ${totalGot.toStringAsFixed(0)}',
+                      '₹ ${formatAmount(totalGot.toStringAsFixed(0))}',
                       style: const TextStyle(color: Colors.green),
                     ),
                   ],
@@ -350,7 +350,7 @@ class _CustomerReportPageState extends State<CustomerReportPage> {
                           children: [
                             Text(formatDateTimeHelper(e['date'])),
                             Text(
-                              'Bal. ₹ ${e['balance']}',
+                              'Bal. ₹ ${formatAmount(e['balance'])}',
                               style: TextStyle(
                                 fontSize: 12,
                                 color:
@@ -364,7 +364,9 @@ class _CustomerReportPageState extends State<CustomerReportPage> {
                       ),
                       Expanded(
                         child: Text(
-                          e['gave'].isNotEmpty ? '₹ ${e['gave']}' : '',
+                          e['gave'].isNotEmpty
+                              ? '₹ ${formatAmount(e['gave'])}'
+                              : '',
                           textAlign: TextAlign.right,
                           style: const TextStyle(
                             color: Colors.red,
@@ -374,7 +376,9 @@ class _CustomerReportPageState extends State<CustomerReportPage> {
                       ),
                       Expanded(
                         child: Text(
-                          e['got'].isNotEmpty ? '₹ ${e['got']}' : '',
+                          e['got'].isNotEmpty
+                              ? '₹ ${formatAmount(e['got'])}'
+                              : '',
                           textAlign: TextAlign.right,
                           style: const TextStyle(
                             color: Colors.green,

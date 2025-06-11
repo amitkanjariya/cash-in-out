@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../utils/helper.dart';
 import 'you_gave_page.dart';
 import 'you_got_page.dart';
 
@@ -17,10 +18,13 @@ class Addcustomerpage extends StatelessWidget {
         elevation: 0,
         titleSpacing: 0,
         title: Row(
-          children: const [
+          children: [
             CircleAvatar(
               backgroundColor: Colors.white,
-              child: Text('EC', style: TextStyle(color: Colors.blue)),
+              child: Text(
+                getInitials(name),
+                style: TextStyle(color: Colors.blue),
+              ),
             ),
             SizedBox(width: 12),
             Expanded(
@@ -28,11 +32,11 @@ class Addcustomerpage extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Eva Charusat',
-                    style: TextStyle(fontSize: 18, color: Colors.white),
+                    name,
+                    style: const TextStyle(fontSize: 18, color: Colors.white),
                   ),
                   Text(
-                    'Click here to view settings',
+                    phone,
                     style: TextStyle(fontSize: 12, color: Colors.white70),
                   ),
                 ],
@@ -41,15 +45,9 @@ class Addcustomerpage extends StatelessWidget {
           ],
         ),
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
+          icon: const Icon(Icons.arrow_back, color: Colors.white),
           onPressed: () => Navigator.pop(context),
         ),
-        actions: const [
-          Icon(Icons.call, color: Colors.white),
-          SizedBox(width: 16),
-          Icon(Icons.more_vert, color: Colors.white),
-          SizedBox(width: 12),
-        ],
       ),
       body: Column(
         children: [
@@ -58,21 +56,21 @@ class Addcustomerpage extends StatelessWidget {
             padding: const EdgeInsets.all(12),
             color: Colors.grey[100],
             child: Row(
-              children: const [
-                Icon(Icons.verified_user, color: Colors.green),
-                SizedBox(width: 8),
+              children: [
+                const Icon(Icons.verified_user, color: Colors.green),
+                const SizedBox(width: 8),
                 Expanded(
                   child: Text(
-                    'Only you and Eva Charusat can see these entries',
-                    style: TextStyle(color: Colors.black87),
+                    'Only you and $name can see these entries',
+                    style: const TextStyle(color: Colors.black87),
                   ),
                 ),
               ],
             ),
           ),
           const Expanded(child: SizedBox()),
-          const Text(
-            'Add first transaction of Eva Charusat',
+          Text(
+            'Add first transaction of $name ',
             style: TextStyle(fontSize: 16),
           ),
           const SizedBox(height: 8),
@@ -87,6 +85,9 @@ class Addcustomerpage extends StatelessWidget {
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.red,
                       padding: const EdgeInsets.symmetric(vertical: 14),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
                     ),
                     onPressed: () {
                       Navigator.push(
@@ -99,7 +100,10 @@ class Addcustomerpage extends StatelessWidget {
                       );
                     },
 
-                    child: const Text('YOU GAVE ₹'),
+                    child: const Text(
+                      'YOU GAVE ₹',
+                      style: TextStyle(color: Colors.white, fontSize: 16),
+                    ),
                   ),
                 ),
                 const SizedBox(width: 16),
@@ -108,6 +112,9 @@ class Addcustomerpage extends StatelessWidget {
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.green,
                       padding: const EdgeInsets.symmetric(vertical: 14),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
                     ),
                     onPressed: () {
                       Navigator.push(
@@ -119,7 +126,10 @@ class Addcustomerpage extends StatelessWidget {
                       );
                     },
 
-                    child: const Text('YOU GOT ₹'),
+                    child: const Text(
+                      'YOU GOT ₹',
+                      style: TextStyle(color: Colors.white, fontSize: 16),
+                    ),
                   ),
                 ),
               ],
