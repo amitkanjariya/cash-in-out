@@ -31,11 +31,31 @@ class _ReportPageState extends State<ReportPage> {
   DateTime? startDate;
   DateTime? endDate;
   String selectedFilter = 'All'; // For filtering (date/income/expense)
+  ScrollController _scrollController = ScrollController();
+  bool _showHeader = true;
+  double _previousOffset = 0;
 
   @override
   void initState() {
     super.initState();
     initUserData();
+    _scrollController.addListener(() {
+      final currentOffset = _scrollController.offset;
+
+      if (currentOffset > _previousOffset && _showHeader) {
+        setState(() => _showHeader = false);
+      } else if (currentOffset < _previousOffset && !_showHeader) {
+        setState(() => _showHeader = true);
+      }
+
+      _previousOffset = currentOffset;
+    });
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
   }
 
   Future<void> initUserData() async {
@@ -516,18 +536,28 @@ class _ReportPageState extends State<ReportPage> {
         title: const Text('View Report', style: TextStyle(color: Colors.white)),
         centerTitle: true,
       ),
-      body: Column(
-        children: [
-          buildTopCard(context),
-          buildSearchbar(),
-          buildBalanceCard(),
-          const Divider(height: 1),
+      body: NotificationListener<ScrollNotification>(
+        onNotification: (scrollNotification) {
+          return true;
+        },
+        child: Column(
+          children: [
+            AnimatedContainer(
+              duration: const Duration(milliseconds: 300),
+              height: _showHeader ? null : 0,
+              child: Column(
+                children: [buildTopCard(context), buildSearchbar()],
+              ),
+            ),
+            buildBalanceCard(),
+            const Divider(height: 1),
 
-          buildStickyHeaderSummary(),
-          buildHeaderRow(),
-          const Divider(height: 1),
-          Expanded(child: buildTransactionList()),
-        ],
+            buildStickyHeaderSummary(),
+            buildHeaderRow(),
+            const Divider(height: 1),
+            Expanded(child: buildTransactionList()),
+          ],
+        ),
       ),
       bottomNavigationBar: buildBottomButtons(),
     );
@@ -586,7 +616,6 @@ class _ReportPageState extends State<ReportPage> {
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(8),
         boxShadow: const [BoxShadow(color: Colors.black12, blurRadius: 4)],
       ),
       child: Row(
@@ -709,6 +738,7 @@ class _ReportPageState extends State<ReportPage> {
       return const Center(child: Text('No transactions found'));
     } else {
       return ListView.builder(
+        controller: _scrollController,
         itemCount: filteredTransactions.length,
         itemBuilder: (context, index) {
           final tx = filteredTransactions[index];
