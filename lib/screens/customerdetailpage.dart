@@ -1,9 +1,10 @@
+import 'package:cashinout/screens/entry_detail_page.dart';
 import 'package:cashinout/screens/you_gave_page.dart';
 import 'package:cashinout/screens/you_got_page.dart';
 import 'package:cashinout/utils/constants.dart';
-import 'package:cashinout/utils/entry_detail_card.dart';
 import 'package:cashinout/utils/helper.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:url_launcher/url_launcher.dart';
@@ -32,11 +33,34 @@ class _CustomerDetailPageState extends State<CustomerDetailPage> {
   double totalGave = 0.0;
   double totalGot = 0.0;
   String? profileImageUrl;
+  bool _showSummary = true;
+  ScrollController? _scrollController;
+
   @override
   void initState() {
     super.initState();
     fetchCustomerDetails();
     fetchCustomerEntries();
+    _scrollController = ScrollController();
+    _scrollController!.addListener(_handleScroll);
+  }
+
+  void _handleScroll() {
+    if (_scrollController?.position.userScrollDirection ==
+        ScrollDirection.reverse) {
+      if (_showSummary) {
+        setState(() {
+          _showSummary = false;
+        });
+      }
+    } else if (_scrollController?.position.userScrollDirection ==
+        ScrollDirection.forward) {
+      if (!_showSummary) {
+        setState(() {
+          _showSummary = true;
+        });
+      }
+    }
   }
 
   Future<void> fetchCustomerDetails() async {
@@ -88,7 +112,7 @@ class _CustomerDetailPageState extends State<CustomerDetailPage> {
           String type = item['type'] ?? '';
           String amountStr = item['amount'] ?? '0';
           double amount = double.tryParse(amountStr) ?? 0.0;
-
+          int transactionId = item['id'] ?? -1;
           String entryGave = '';
           String entryGot = '';
 
@@ -103,6 +127,7 @@ class _CustomerDetailPageState extends State<CustomerDetailPage> {
           }
 
           filtered.insert(0, {
+            'transactionId': transactionId.toString(),
             'date': item['created_at'] ?? '',
             'gave': entryGave,
             'got': entryGot,
@@ -130,6 +155,11 @@ class _CustomerDetailPageState extends State<CustomerDetailPage> {
         totalGot = 0;
       });
     }
+  }
+
+  Future<void> _refreshEntries() async {
+    await fetchCustomerEntries(); // Replace with your actual data-fetching method
+    setState(() {});
   }
 
   void _launchDialer() async {
@@ -211,6 +241,12 @@ class _CustomerDetailPageState extends State<CustomerDetailPage> {
   }
 
   @override
+  void dispose() {
+    _scrollController?.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
@@ -220,8 +256,8 @@ class _CustomerDetailPageState extends State<CustomerDetailPage> {
           onPressed: () => Navigator.pop(context),
         ),
         title: GestureDetector(
-          onTap: () {
-            Navigator.push(
+          onTap: () async {
+            await Navigator.push(
               context,
               MaterialPageRoute(
                 builder:
@@ -231,6 +267,7 @@ class _CustomerDetailPageState extends State<CustomerDetailPage> {
                     ),
               ),
             );
+            await fetchCustomerDetails(); // Refresh customer details after profile update
           },
           child: Row(
             children: [
@@ -275,65 +312,83 @@ class _CustomerDetailPageState extends State<CustomerDetailPage> {
       ),
       body: Column(
         children: [
-          Container(
-            margin: const EdgeInsets.all(16),
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(12),
-              boxShadow: [BoxShadow(color: Colors.black12, blurRadius: 4)],
-            ),
-            child: Builder(
-              builder: (_) {
-                if (totalGave > totalGot) {
-                  double diff = totalGave - totalGot;
-                  return Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      const Text('You Gave', style: TextStyle(fontSize: 16)),
-                      Text(
-                        '₹ ${formatAmount(diff.toStringAsFixed(2))}',
-                        style: const TextStyle(
-                          color: Colors.red,
-                          fontSize: 20,
+          AnimatedContainer(
+            duration: const Duration(milliseconds: 300),
+            curve: Curves.easeInOut,
+            height: _showSummary ? null : 0,
+            margin: _showSummary ? const EdgeInsets.all(14) : EdgeInsets.zero,
+            padding: _showSummary ? const EdgeInsets.all(14) : EdgeInsets.zero,
+            decoration:
+                _showSummary
+                    ? BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(12),
+                      boxShadow: [
+                        BoxShadow(color: Colors.black12, blurRadius: 4),
+                      ],
+                    )
+                    : null,
+            child: AnimatedOpacity(
+              duration: const Duration(milliseconds: 300),
+              opacity: _showSummary ? 1.0 : 0.0,
+              child: Builder(
+                builder: (_) {
+                  if (totalGave > totalGot) {
+                    double diff = totalGave - totalGot;
+                    return Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Text(
+                          'You will Get',
+                          style: TextStyle(fontSize: 16),
+                        ),
+                        Text(
+                          '₹ ${formatAmount(diff.toStringAsFixed(2))}',
+                          style: const TextStyle(
+                            color: Colors.red,
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
+                    );
+                  } else if (totalGot > totalGave) {
+                    double diff = totalGot - totalGave;
+                    return Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Text(
+                          'You will give',
+                          style: TextStyle(fontSize: 16),
+                        ),
+                        Text(
+                          '₹ ${formatAmount(diff.toStringAsFixed(2))}',
+                          style: const TextStyle(
+                            color: Colors.green,
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
+                    );
+                  } else {
+                    return const Center(
+                      child: Text(
+                        'Settled up',
+                        style: TextStyle(
+                          color: Colors.grey,
+                          fontSize: 18,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
-                    ],
-                  );
-                } else if (totalGot > totalGave) {
-                  double diff = totalGot - totalGave;
-                  return Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      const Text('You Got', style: TextStyle(fontSize: 16)),
-                      Text(
-                        '₹ ${formatAmount(diff.toStringAsFixed(2))}',
-                        style: const TextStyle(
-                          color: Colors.green,
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ],
-                  );
-                } else {
-                  return const Center(
-                    child: Text(
-                      'Settled up',
-                      style: TextStyle(
-                        color: Colors.grey,
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  );
-                }
-              },
+                    );
+                  }
+                },
+              ),
             ),
           ),
           Container(
-            margin: const EdgeInsets.symmetric(horizontal: 16),
+            margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: [
@@ -369,7 +424,7 @@ class _CustomerDetailPageState extends State<CustomerDetailPage> {
               ],
             ),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 4),
           Container(
             color: Colors.grey[200],
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -401,95 +456,99 @@ class _CustomerDetailPageState extends State<CustomerDetailPage> {
           ),
           const Divider(height: 1),
           Expanded(
-            child: ListView.builder(
-              itemCount: entries.length,
-              itemBuilder: (context, index) {
-                final entry = entries[index];
-                final String entryDate = entry['date'];
-                final DateTime currentDate = DateTime.parse(entryDate);
-                final String formattedDate = formatDateWithRelativeLabel(
-                  currentDate,
-                );
-
-                // Show date label only if it's the first entry or date changes
-                bool showDateLabel = false;
-                if (index == 0) {
-                  showDateLabel = true;
-                } else {
-                  final previousDate = DateTime.parse(
-                    entries[index - 1]['date'],
+            child: RefreshIndicator(
+              onRefresh: _refreshEntries,
+              child: ListView.builder(
+                controller: _scrollController,
+                physics: const AlwaysScrollableScrollPhysics(),
+                itemCount: entries.length,
+                itemBuilder: (context, index) {
+                  final entry = entries[index];
+                  final String entryDate = entry['date'];
+                  final DateTime currentDate = DateTime.parse(entryDate);
+                  final String formattedDate = formatDateWithRelativeLabel(
+                    currentDate,
                   );
-                  showDateLabel = !isSameDate(currentDate, previousDate);
-                }
 
-                return Column(
-                  children: [
-                    if (showDateLabel)
-                      Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 10),
-                        child: Center(
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 5,
-                              vertical: 3,
-                            ),
-                            decoration: BoxDecoration(
-                              color: Colors.white,
-                              borderRadius: BorderRadius.circular(5),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Colors.grey.shade400,
-                                  blurRadius: 2,
-                                  offset: const Offset(0, 1),
+                  bool showDateLabel = false;
+                  if (index == 0) {
+                    showDateLabel = true;
+                  } else {
+                    final previousDate = DateTime.parse(
+                      entries[index - 1]['date'],
+                    );
+                    showDateLabel = !isSameDate(currentDate, previousDate);
+                  }
+
+                  return Column(
+                    children: [
+                      if (showDateLabel)
+                        Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 10),
+                          child: Center(
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 5,
+                                vertical: 3,
+                              ),
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(5),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.grey.shade400,
+                                    blurRadius: 2,
+                                    offset: const Offset(0, 1),
+                                  ),
+                                ],
+                              ),
+                              child: Text(
+                                formattedDate,
+                                style: const TextStyle(
+                                  fontSize: 10,
+                                  color: Colors.black87,
+                                  fontWeight: FontWeight.w500,
                                 ),
-                              ],
-                            ),
-                            child: Text(
-                              formattedDate,
-                              style: const TextStyle(
-                                fontSize: 10,
-                                color: Colors.black87,
-                                fontWeight: FontWeight.w500,
                               ),
                             ),
                           ),
                         ),
-                      ),
-
-                    GestureDetector(
-                      onTap: () {
-                        showModalBottomSheet(
-                          context: context,
-                          isScrollControlled: true,
-                          shape: const RoundedRectangleBorder(
-                            borderRadius: BorderRadius.vertical(
-                              top: Radius.circular(20),
+                      GestureDetector(
+                        onTap: () async {
+                          await Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder:
+                                  (_) => EntryDetailPage(
+                                    transactionId: entry['transactionId'],
+                                    name: customerName,
+                                    dateTime: entry['date'],
+                                    amount:
+                                        entry['gave'].isNotEmpty
+                                            ? entry['gave']
+                                            : entry['got'],
+                                    type:
+                                        entry['gave'].isNotEmpty
+                                            ? 'minus'
+                                            : 'plus',
+                                    note: entry['note'] ?? '',
+                                  ),
                             ),
-                          ),
-                          builder:
-                              (_) => Padding(
-                                padding: MediaQuery.of(context).viewInsets,
-                                child: EntryDetailCard(
-                                  date: entry['date'] ?? '',
-                                  gave: entry['gave'] ?? '',
-                                  got: entry['got'] ?? '',
-                                  balance: entry['balance'] ?? '',
-                                  note: entry['note'],
-                                ),
-                              ),
-                        );
-                      },
-                      child: EntryRow(
-                        date: entry['date'] ?? '',
-                        balance: entry['balance'] ?? '',
-                        gave: entry['gave'] ?? '',
-                        got: entry['got'] ?? '',
-                        note: entry['note'],
+                          );
+                          fetchCustomerEntries();
+                        },
+                        child: EntryRow(
+                          date: entry['date'] ?? '',
+                          balance: entry['balance'] ?? '',
+                          gave: entry['gave'] ?? '',
+                          got: entry['got'] ?? '',
+                          note: entry['note'],
+                        ),
                       ),
-                    ),
-                  ],
-                );
-              },
+                    ],
+                  );
+                },
+              ),
             ),
           ),
         ],
