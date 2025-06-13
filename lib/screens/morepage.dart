@@ -77,7 +77,7 @@ class _MorePageState extends State<MorePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: Colors.blue[800],
+        backgroundColor: Color(0xFF468585),
         centerTitle: true, // ✅ This centers the title
         title: const Text(
           'Profile',
@@ -100,7 +100,7 @@ class _MorePageState extends State<MorePage> {
                       backgroundColor: Colors.transparent,
                     )
                     : CircleAvatar(
-                      backgroundColor: Colors.blue,
+                      backgroundColor: Color(0xFF468585),
                       child: Text(
                         _name.isNotEmpty ? _name[0].toUpperCase() : 'P',
                         style: const TextStyle(color: Colors.white),
@@ -108,7 +108,7 @@ class _MorePageState extends State<MorePage> {
                     ),
             title: Text(_name),
             subtitle: Text(_phone),
-            trailing: const Icon(Icons.edit, color: Colors.blue),
+            trailing: const Icon(Icons.edit, color: Color(0xFF468585)),
             onTap: () {
               Navigator.push(
                 context,
@@ -119,7 +119,7 @@ class _MorePageState extends State<MorePage> {
           const SizedBox(height: 16),
 
           ExpansionTile(
-            leading: const Icon(Icons.help, color: Colors.blue),
+            leading: const Icon(Icons.help, color: Color(0xFF468585)),
             title: const Text('Help & Support'),
             children: const [
               ListTile(
@@ -140,7 +140,7 @@ class _MorePageState extends State<MorePage> {
           const SizedBox(height: 8),
 
           ExpansionTile(
-            leading: const Icon(Icons.info, color: Colors.blue),
+            leading: const Icon(Icons.info, color: Color(0xFF468585)),
             title: const Text('About Us'),
             children: const [
               ListTile(
@@ -165,7 +165,7 @@ class _MorePageState extends State<MorePage> {
             icon: const Icon(Icons.logout),
             label: const Text("Logout"),
             style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.red,
+              backgroundColor: Color(0xFF468585),
               foregroundColor: Colors.white,
               padding: const EdgeInsets.symmetric(vertical: 12),
               shape: RoundedRectangleBorder(

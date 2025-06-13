@@ -14,7 +14,7 @@ class Addcustomerpage extends StatelessWidget {
     return Scaffold(
       backgroundColor: Colors.grey[200],
       appBar: AppBar(
-        backgroundColor: const Color(0xFF1565C0),
+        backgroundColor: Color(0xFF468585),
         elevation: 0,
         titleSpacing: 0,
         title: Row(
@@ -23,7 +23,7 @@ class Addcustomerpage extends StatelessWidget {
               backgroundColor: Colors.white,
               child: Text(
                 getInitials(name),
-                style: TextStyle(color: Colors.blue),
+                style: TextStyle(color: Color(0xFF468585)),
               ),
             ),
             SizedBox(width: 12),
@@ -74,7 +74,7 @@ class Addcustomerpage extends StatelessWidget {
             style: TextStyle(fontSize: 16),
           ),
           const SizedBox(height: 8),
-          const Icon(Icons.arrow_downward, color: Colors.blue),
+          const Icon(Icons.arrow_downward, color: Color(0xFF468585)),
           const SizedBox(height: 12),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),

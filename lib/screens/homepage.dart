@@ -42,7 +42,7 @@ class _HomePageState extends State<HomePage> {
           ),
           BottomNavigationBarItem(icon: Icon(Icons.apps), label: 'MORE'),
         ],
-        selectedItemColor: Colors.blue,
+        selectedItemColor: Color(0xFF468585),
         unselectedItemColor: Colors.grey,
       ),
     );
@@ -120,18 +120,52 @@ class _CustomerListPageState extends State<CustomerListPage> {
         double give = 0;
         double get = 0;
 
+        // Group by contactId and calculate net balance
+        final Map<String, List<TransactionModel>> grouped = {};
+
         for (var tx in fetchedTransactions) {
-          double amount = double.tryParse(tx.amount.toString()) ?? 0;
-          if (tx.type == 'minus') {
-            give += amount;
-          } else if (tx.type == 'plus') {
-            get += amount;
-          }
+          grouped.putIfAbsent(tx.contactId, () => []).add(tx);
         }
+
+        final List<TransactionModel> uniqueFiltered = [];
+
+        grouped.forEach((contactId, txList) {
+          double totalPlus = 0;
+          double totalMinus = 0;
+
+          for (var tx in txList) {
+            double amount = double.tryParse(tx.amount) ?? 0;
+            if (tx.type == 'plus') {
+              totalPlus += amount;
+              get += amount;
+            } else if (tx.type == 'minus') {
+              totalMinus += amount;
+              give += amount;
+            }
+          }
+
+          final net = totalPlus - totalMinus;
+
+          // Sort by latest createdAt
+          txList.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+          final latestTx = txList.first;
+
+          final summaryTx = TransactionModel(
+            amount: net.abs().toStringAsFixed(2),
+            detail: latestTx.detail,
+            type: net >= 0 ? 'plus' : 'minus',
+            createdAt: latestTx.createdAt,
+            contactId: latestTx.contactId,
+            contactName: latestTx.contactName,
+            contactPhone: latestTx.contactPhone,
+          );
+
+          uniqueFiltered.add(summaryTx);
+        });
 
         setState(() {
           transactions = fetchedTransactions;
-          filteredTransactions = fetchedTransactions;
+          filteredTransactions = uniqueFiltered;
           totalGive = give;
           totalGet = get;
           isLoading = false;
@@ -142,7 +176,6 @@ class _CustomerListPageState extends State<CustomerListPage> {
           context,
         ).showSnackBar(const SnackBar(content: Text('No transactions found')));
       }
-      print("Transactions fetched: ${transactions.length}");
     } else {
       setState(() => isLoading = false);
       ScaffoldMessenger.of(context).showSnackBar(
@@ -203,7 +236,7 @@ class _CustomerListPageState extends State<CustomerListPage> {
     return Scaffold(
       backgroundColor: Colors.grey[100],
       appBar: AppBar(
-        backgroundColor: const Color(0xFF1565C0),
+        backgroundColor: const Color(0xFF468585),
         elevation: 0,
         automaticallyImplyLeading: false,
         title: Row(
@@ -255,8 +288,8 @@ class _CustomerListPageState extends State<CustomerListPage> {
                             amount: '₹ ${formatAmount(transaction.amount)}',
                             subtitle:
                                 transaction.type == 'plus'
-                                    ? "You'll Get"
-                                    : "You'll Give",
+                                    ? "You'll Give"
+                                    : "You'll Get",
                             time: transaction.createdAt,
                             isCredit: transaction.type == 'plus',
                             onTap: () {
@@ -305,15 +338,15 @@ class _CustomerListPageState extends State<CustomerListPage> {
           Row(
             children: [
               buildBalanceCard(
-                'You will give',
+                'You will Get',
                 '₹ ${formatAmount(totalGive.toString())}',
-                Colors.green,
+                Colors.red,
               ),
               Container(width: 1, height: 40, color: Colors.grey[300]),
               buildBalanceCard(
-                'You will get',
+                'You will Give',
                 '₹ ${formatAmount(totalGet.toString())}',
-                Colors.red,
+                Colors.green,
               ),
             ],
           ),
@@ -330,12 +363,12 @@ class _CustomerListPageState extends State<CustomerListPage> {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: const [
-                Icon(Icons.bar_chart, size: 16, color: Colors.blue),
+                Icon(Icons.bar_chart, size: 16, color: Color(0xFF468585)),
                 SizedBox(width: 4),
                 Text(
                   'VIEW REPORT',
                   style: TextStyle(
-                    color: Colors.blue,
+                    color: Color(0xFF468585),
                     fontWeight: FontWeight.bold,
                   ),
                 ),
@@ -439,7 +472,7 @@ class CustomerTile extends StatelessWidget {
       child: ListTile(
         onTap: onTap,
         leading: CircleAvatar(
-          backgroundColor: const Color(0xFF1565C0),
+          backgroundColor: const Color(0xFF468585),
           child: Text(
             getInitials(name),
             style: const TextStyle(color: Colors.white),
@@ -457,7 +490,7 @@ class CustomerTile extends StatelessWidget {
             Text(
               amount,
               style: TextStyle(
-                color: isCredit ? Colors.red : Colors.green,
+                color: isCredit ? Colors.green : Colors.red,
                 fontWeight: FontWeight.w600,
               ),
             ),

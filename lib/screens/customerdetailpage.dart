@@ -250,7 +250,7 @@ class _CustomerDetailPageState extends State<CustomerDetailPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: Colors.blue[800],
+        backgroundColor: Color(0xFF468585),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.white),
           onPressed: () => Navigator.pop(context),
@@ -281,7 +281,7 @@ class _CustomerDetailPageState extends State<CustomerDetailPage> {
                     profileImageUrl == null
                         ? Text(
                           getInitials(customerName),
-                          style: const TextStyle(color: Colors.blue),
+                          style: const TextStyle(color: Color(0xFF468585)),
                         )
                         : null,
               ),
@@ -626,7 +626,7 @@ class IconWithLabel extends StatelessWidget {
   Widget build(BuildContext context) {
     return Column(
       children: [
-        Icon(icon, color: Colors.blue),
+        Icon(icon, color: Color(0xFF468585)),
         const SizedBox(height: 4),
         Text(label, style: const TextStyle(fontSize: 12)),
       ],

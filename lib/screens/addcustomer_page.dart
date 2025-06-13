@@ -21,7 +21,7 @@ class _AddCustomerPageState extends State<AddCustomerPage> {
           'Add Customer',
           style: TextStyle(fontSize: 20, color: Colors.white),
         ),
-        backgroundColor: Colors.blue,
+        backgroundColor: Color(0xFF468585),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
           onPressed: () => Navigator.pop(context),
@@ -84,7 +84,7 @@ class _AddCustomerPageState extends State<AddCustomerPage> {
                     }
                   },
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.blue[300],
+                    backgroundColor: Color(0xFF468585),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(8),
                     ),

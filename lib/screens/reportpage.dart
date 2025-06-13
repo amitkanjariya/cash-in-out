@@ -532,7 +532,7 @@ class _ReportPageState extends State<ReportPage> {
     return Scaffold(
       backgroundColor: Colors.grey[100],
       appBar: AppBar(
-        backgroundColor: Colors.blue[800],
+        backgroundColor: Color(0xFF468585),
         title: const Text('View Report', style: TextStyle(color: Colors.white)),
         centerTitle: true,
       ),
@@ -565,7 +565,7 @@ class _ReportPageState extends State<ReportPage> {
 
   Widget buildTopCard(BuildContext context) {
     return Container(
-      color: Colors.blue[800],
+      color: Color(0xFF468585),
       padding: const EdgeInsets.symmetric(
         vertical: 0,
         horizontal: 8,

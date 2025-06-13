@@ -223,195 +223,207 @@ class _CustomerReportPageState extends State<CustomerReportPage> {
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Colors.blue[800],
-        title: Text('Report of $customerName'),
+        title: Text(
+          'Report of $customerName',
+          style: const TextStyle(color: Colors.white),
+        ),
         centerTitle: true,
       ),
       body: Column(
         children: [
-          // date filter
-          Padding(
-            padding: const EdgeInsets.all(10),
-            child: Row(
-              children: [
-                Expanded(
-                  child: ElevatedButton.icon(
-                    onPressed: pickStartDate,
-                    icon: const Icon(Icons.calendar_today),
-                    label: Text(
-                      startDate == null
-                          ? "START DATE"
-                          : formatDateOnly(startDate!),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: ElevatedButton.icon(
-                    onPressed: pickEndDate,
-                    icon: const Icon(Icons.calendar_today),
-                    label: Text(
-                      endDate == null ? "END DATE" : formatDateOnly(endDate!),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          Container(
-            color: Colors.white,
-            padding: const EdgeInsets.all(12),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                const Text('Net Balance', style: TextStyle(fontSize: 18)),
-                Text(
-                  '₹ ${formatAmount(netBalance.abs().toStringAsFixed(0))}',
-                  style: TextStyle(
-                    fontSize: 18,
-                    color: netBalance >= 0 ? Colors.red : Colors.green,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          // Totals
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            child: Row(
-              children: [
-                Text(
-                  'TOTAL\n${entries.length} Entries',
-                  style: const TextStyle(fontSize: 12),
-                ),
-                const Spacer(),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  children: [
-                    const Text(
-                      'YOU GAVE',
-                      style: TextStyle(color: Colors.red, fontSize: 12),
-                    ),
-                    Text(
-                      '₹ ${formatAmount(totalGave.toStringAsFixed(0))}',
-                      style: const TextStyle(color: Colors.red),
-                    ),
-                  ],
-                ),
-                const SizedBox(width: 20),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  children: [
-                    const Text(
-                      'YOU GOT',
-                      style: TextStyle(color: Colors.green, fontSize: 12),
-                    ),
-                    Text(
-                      '₹ ${formatAmount(totalGot.toStringAsFixed(0))}',
-                      style: const TextStyle(color: Colors.green),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
+          _buildDateFilterRow(),
+          _buildSummaryBox(netBalance),
+          _buildTotalSummary(),
           const Divider(height: 1),
-          // Entry headers
-          Container(
-            color: Colors.grey[300],
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            child: Row(
-              children: const [
-                Expanded(flex: 2, child: Text('Date')),
-                Expanded(child: Text('You Gave', textAlign: TextAlign.right)),
-                Expanded(child: Text('You Got', textAlign: TextAlign.right)),
-              ],
-            ),
-          ),
-          // Entry list
+          _buildEntryHeader(),
           Expanded(
             child: ListView.builder(
               itemCount: entries.length,
-              itemBuilder: (context, index) {
-                final e = entries[index];
-                return Container(
-                  color: index % 2 == 0 ? Colors.white : Colors.grey[100],
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 10,
-                  ),
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Expanded(
-                        flex: 2,
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(formatDateTimeHelper(e['date'])),
-                            Text(
-                              'Bal. ₹ ${formatAmount(e['balance'])}',
-                              style: TextStyle(
-                                fontSize: 12,
-                                color:
-                                    double.parse(e['balance']) >= 0
-                                        ? Colors.green
-                                        : Colors.red,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      Expanded(
-                        child: Text(
-                          e['gave'].isNotEmpty
-                              ? '₹ ${formatAmount(e['gave'])}'
-                              : '',
-                          textAlign: TextAlign.right,
-                          style: const TextStyle(
-                            color: Colors.red,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ),
-                      Expanded(
-                        child: Text(
-                          e['got'].isNotEmpty
-                              ? '₹ ${formatAmount(e['got'])}'
-                              : '',
-                          textAlign: TextAlign.right,
-                          style: const TextStyle(
-                            color: Colors.green,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                );
-              },
+              itemBuilder: (context, index) => _buildEntryRow(index),
             ),
           ),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            child: Row(
+          _buildDownloadShareButtons(),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDateFilterRow() {
+    return Padding(
+      padding: const EdgeInsets.all(10),
+      child: Row(
+        children: [
+          Expanded(
+            child: ElevatedButton.icon(
+              onPressed: pickStartDate,
+              icon: const Icon(Icons.calendar_today),
+              label: Text(
+                startDate == null ? "START DATE" : formatDateOnly(startDate!),
+              ),
+            ),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: ElevatedButton.icon(
+              onPressed: pickEndDate,
+              icon: const Icon(Icons.calendar_today),
+              label: Text(
+                endDate == null ? "END DATE" : formatDateOnly(endDate!),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSummaryBox(double netBalance) {
+    return Container(
+      color: Colors.white,
+      padding: const EdgeInsets.all(12),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          const Text('Net Balance', style: TextStyle(fontSize: 18)),
+          Text(
+            '₹ ${formatAmount(netBalance.abs().toStringAsFixed(0))}',
+            style: TextStyle(
+              fontSize: 18,
+              color: netBalance >= 0 ? Colors.red : Colors.green,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTotalSummary() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      child: Row(
+        children: [
+          Text(
+            'TOTAL\n${entries.length} Entries',
+            style: const TextStyle(fontSize: 12),
+          ),
+          const Spacer(),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              const Text(
+                'YOU GAVE',
+                style: TextStyle(color: Colors.red, fontSize: 12),
+              ),
+              Text(
+                '₹ ${formatAmount(totalGave.toStringAsFixed(0))}',
+                style: const TextStyle(color: Colors.red),
+              ),
+            ],
+          ),
+          const SizedBox(width: 20),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              const Text(
+                'YOU GOT',
+                style: TextStyle(color: Colors.green, fontSize: 12),
+              ),
+              Text(
+                '₹ ${formatAmount(totalGot.toStringAsFixed(0))}',
+                style: const TextStyle(color: Colors.green),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildEntryHeader() {
+    return Container(
+      color: Colors.grey[300],
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      child: Row(
+        children: const [
+          Expanded(flex: 2, child: Text('Date')),
+          Expanded(child: Text('You Gave', textAlign: TextAlign.right)),
+          Expanded(child: Text('You Got', textAlign: TextAlign.right)),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildEntryRow(int index) {
+    final e = entries[index];
+    return Container(
+      color: index % 2 == 0 ? Colors.white : Colors.grey[100],
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Expanded(
+            flex: 2,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Expanded(
-                  child: ElevatedButton.icon(
-                    icon: const Icon(Icons.picture_as_pdf),
-                    label: const Text('DOWNLOAD'),
-                    onPressed: downloadPdf,
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: ElevatedButton.icon(
-                    icon: const Icon(Icons.share),
-                    label: const Text('SHARE'),
-                    onPressed: sharePdf,
+                Text(formatDateTimeHelper(e['date'])),
+                Text(
+                  'Bal. ₹ ${formatAmount(e['balance'])}',
+                  style: TextStyle(
+                    fontSize: 12,
+                    color:
+                        double.parse(e['balance']) >= 0
+                            ? Colors.green
+                            : Colors.red,
                   ),
                 ),
               ],
+            ),
+          ),
+          Expanded(
+            child: Text(
+              e['gave'].isNotEmpty ? '₹ ${formatAmount(e['gave'])}' : '',
+              textAlign: TextAlign.right,
+              style: const TextStyle(
+                color: Colors.red,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+          Expanded(
+            child: Text(
+              e['got'].isNotEmpty ? '₹ ${formatAmount(e['got'])}' : '',
+              textAlign: TextAlign.right,
+              style: const TextStyle(
+                color: Colors.green,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDownloadShareButtons() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      child: Row(
+        children: [
+          Expanded(
+            child: ElevatedButton.icon(
+              icon: const Icon(Icons.picture_as_pdf),
+              label: const Text('DOWNLOAD'),
+              onPressed: downloadPdf,
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: ElevatedButton.icon(
+              icon: const Icon(Icons.share),
+              label: const Text('SHARE'),
+              onPressed: sharePdf,
             ),
           ),
         ],
