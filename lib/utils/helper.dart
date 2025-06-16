@@ -82,10 +82,11 @@ String getInitials(String name) {
 
 String formatAmount(String amount) {
   try {
-    // Remove any existing commas and parse as double
+    // Remove commas and parse to double
     final number = double.parse(amount.replaceAll(',', ''));
+    final absNumber = number.abs(); // Make it absolute
     final formatter = NumberFormat('#,##,##,###.##', 'en_IN');
-    return formatter.format(number);
+    return formatter.format(absNumber);
   } catch (e) {
     return amount; // fallback if parsing fails
   }

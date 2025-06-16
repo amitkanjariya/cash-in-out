@@ -391,7 +391,6 @@ class _ReportPageState extends State<ReportPage> {
                           netBalance >= 0
                               ? PdfColors.green800
                               : PdfColors.red800,
-                      suffix: netBalance >= 0 ? " Cr" : " Dr",
                     ),
                   ],
                 ),
