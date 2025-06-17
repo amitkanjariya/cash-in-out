@@ -120,7 +120,6 @@ class _CustomerListPageState extends State<CustomerListPage> {
         double give = 0;
         double get = 0;
 
-        // Group by contactId and calculate net balance
         final Map<String, List<TransactionModel>> grouped = {};
 
         for (var tx in fetchedTransactions) {
@@ -146,10 +145,8 @@ class _CustomerListPageState extends State<CustomerListPage> {
 
           final net = totalPlus - totalMinus;
 
-          // Sort by latest createdAt
           txList.sort((a, b) => b.createdAt.compareTo(a.createdAt));
           final latestTx = txList.first;
-
           final summaryTx = TransactionModel(
             amount: net.abs().toStringAsFixed(2),
             detail: latestTx.detail,
@@ -158,6 +155,7 @@ class _CustomerListPageState extends State<CustomerListPage> {
             contactId: latestTx.contactId,
             contactName: latestTx.contactName,
             contactPhone: latestTx.contactPhone,
+            contactProfileImage: latestTx.contactProfileImage,
           );
 
           uniqueFiltered.add(summaryTx);
@@ -244,10 +242,7 @@ class _CustomerListPageState extends State<CustomerListPage> {
           children: [
             Row(
               children: [
-                Image.asset(
-                  'assets/images/logo2.png',
-                  height: 40, // slightly taller for better readability
-                ),
+                Image.asset('assets/images/logo2.png', height: 40),
                 const SizedBox(width: 12),
                 const Text(
                   'Cash In-Out',
@@ -300,8 +295,7 @@ class _CustomerListPageState extends State<CustomerListPage> {
                     : RefreshIndicator(
                       onRefresh: fetchTransactions,
                       child: ListView.builder(
-                        physics:
-                            const AlwaysScrollableScrollPhysics(), // Pull-to-refresh always
+                        physics: const AlwaysScrollableScrollPhysics(),
                         itemCount: filteredTransactions.length,
                         itemBuilder: (context, index) {
                           final transaction = filteredTransactions[index];
@@ -314,6 +308,7 @@ class _CustomerListPageState extends State<CustomerListPage> {
                                     : "You'll Get",
                             time: transaction.createdAt,
                             isCredit: transaction.type == 'plus',
+                            profileImageUrl: transaction.contactProfileImage,
                             onTap: () async {
                               await Navigator.push(
                                 context,
@@ -474,7 +469,7 @@ class _CustomerListPageState extends State<CustomerListPage> {
 }
 
 class CustomerTile extends StatelessWidget {
-  final String name, amount, subtitle, time;
+  final String name, amount, subtitle, time, profileImageUrl;
   final bool isCredit;
   final VoidCallback onTap;
 
@@ -484,6 +479,7 @@ class CustomerTile extends StatelessWidget {
     required this.amount,
     required this.subtitle,
     required this.time,
+    required this.profileImageUrl,
     required this.isCredit,
     required this.onTap,
   });
@@ -496,11 +492,17 @@ class CustomerTile extends StatelessWidget {
         onTap: onTap,
         leading: CircleAvatar(
           backgroundColor: const Color(0xFF468585),
-          child: Text(
-            getInitials(name),
-            style: const TextStyle(color: Colors.white),
-          ),
+          backgroundImage:
+              profileImageUrl.isNotEmpty ? NetworkImage(profileImageUrl) : null,
+          child:
+              profileImageUrl.isEmpty
+                  ? Text(
+                    getInitials(name),
+                    style: const TextStyle(color: Colors.white),
+                  )
+                  : null,
         ),
+
         title: Text(name, style: const TextStyle(fontWeight: FontWeight.w600)),
         subtitle: Text(
           formatDateTimeHelper(time),
