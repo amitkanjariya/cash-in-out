@@ -1,3 +1,4 @@
+import 'package:cashinout/screens/homepage.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:http/http.dart' as http;
@@ -17,6 +18,7 @@ class YouGotPage extends StatefulWidget {
 class _YouGotPageState extends State<YouGotPage> {
   final TextEditingController _amountController = TextEditingController();
   final TextEditingController _detailsController = TextEditingController();
+  DateTime _selectedDate = DateTime.now();
   bool _isLoading = false;
 
   Future<void> _submitTransaction() async {
@@ -87,6 +89,7 @@ class _YouGotPageState extends State<YouGotPage> {
         'amount': amount,
         'detail': detail,
         'type': 'plus',
+        'created_at': _selectedDate.toIso8601String(),
       };
 
       // Include customer ID if available
@@ -112,7 +115,11 @@ class _YouGotPageState extends State<YouGotPage> {
       );
 
       if (transactionResult['success'] == true) {
-        Navigator.pop(context);
+        Navigator.pushAndRemoveUntil(
+          context,
+          MaterialPageRoute(builder: (_) => const HomePage()),
+          (route) => false,
+        );
       }
     } catch (e) {
       print('Error: $e');
@@ -126,18 +133,51 @@ class _YouGotPageState extends State<YouGotPage> {
     }
   }
 
+  Future<void> _pickDate() async {
+    final DateTime? picked = await showDatePicker(
+      context: context,
+      initialDate: _selectedDate,
+      firstDate: DateTime(2020),
+      lastDate: DateTime(2100),
+    );
+    if (picked != null) {
+      setState(() {
+        _selectedDate = picked;
+      });
+    }
+  }
+
+  String _monthName(int month) {
+    const months = [
+      '',
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec',
+    ];
+    return months[month];
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
-        backgroundColor: Colors.greenAccent,
+        backgroundColor: Colors.green,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.black),
+          icon: const Icon(Icons.arrow_back, color: Colors.white),
           onPressed: () => Navigator.pop(context),
         ),
-        title: const Text('You Got ₹', style: TextStyle(color: Colors.black)),
+        title: const Text('You Got ₹', style: TextStyle(color: Colors.white)),
       ),
       body: Padding(
         padding: const EdgeInsets.all(16),
@@ -164,13 +204,34 @@ class _YouGotPageState extends State<YouGotPage> {
                 fillColor: Color(0xFFF4F4F4),
               ),
             ),
+            const SizedBox(height: 10),
+            // 📅 Date Picker Button
+            Align(
+              alignment: Alignment.centerLeft,
+              child: ElevatedButton.icon(
+                onPressed: _pickDate,
+                icon: Icon(Icons.calendar_month, color: Colors.green),
+                label: Text(
+                  '${_selectedDate.day} ${_monthName(_selectedDate.month)}, ${_selectedDate.year.toString().substring(2)}',
+                  style: const TextStyle(color: Colors.black),
+                ),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.white,
+                  shadowColor: Colors.transparent,
+                  side: BorderSide(color: Colors.green),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                ),
+              ),
+            ),
             const Spacer(),
             ElevatedButton(
               style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.greenAccent,
+                backgroundColor: Colors.green,
                 minimumSize: const Size.fromHeight(50),
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(30),
+                  borderRadius: BorderRadius.circular(8),
                 ),
               ),
               onPressed: _isLoading ? null : _submitTransaction,
@@ -179,7 +240,7 @@ class _YouGotPageState extends State<YouGotPage> {
                       ? const CircularProgressIndicator(color: Colors.black)
                       : const Text(
                         'Done',
-                        style: TextStyle(color: Colors.black),
+                        style: TextStyle(color: Colors.white, fontSize: 16),
                       ),
             ),
           ],
