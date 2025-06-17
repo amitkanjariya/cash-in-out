@@ -136,39 +136,32 @@ class _OTPScreenState extends State<OTPScreen> {
 
     return Scaffold(
       backgroundColor: Colors.white,
+      resizeToAvoidBottomInset: true,
       body: SafeArea(
         child: SizedBox(
           height: height,
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 36),
+            padding: const EdgeInsets.symmetric(horizontal: 24),
             child: Column(
               children: [
                 const SizedBox(height: 40),
-                Image.asset('assets/images/logo1.png', height: 130),
+                Image.asset('assets/images/logo_cashinout1.png', height: 130),
                 const SizedBox(height: 20),
                 const Text(
                   'Verify OTP',
-                  style: TextStyle(
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
-                    fontFamily: 'Poppins',
-                  ),
-                ),
-                const SizedBox(height: 12),
-                const Text(
-                  'Enter the 6-digit OTP sent to your number',
-                  style: TextStyle(
-                    fontSize: 15,
-                    color: Colors.black54,
-                    fontFamily: 'Inter',
-                  ),
+                  style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
                 ),
                 const SizedBox(height: 40),
+                const Text(
+                  'Enter the 6-digit OTP sent to your number',
+                  style: TextStyle(fontSize: 15, color: Colors.black54),
+                ),
+                const SizedBox(height: 12),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  padding: const EdgeInsets.symmetric(horizontal: 10),
                   decoration: BoxDecoration(
                     color: const Color(0xFFF4F4F4),
-                    borderRadius: BorderRadius.circular(14),
+                    borderRadius: BorderRadius.circular(10),
                   ),
                   child: TextField(
                     keyboardType: TextInputType.number,
@@ -196,7 +189,11 @@ class _OTPScreenState extends State<OTPScreen> {
                           });
                         },
                       ),
+                      contentPadding: const EdgeInsets.symmetric(vertical: 18),
                       border: InputBorder.none,
+                      enabledBorder: InputBorder.none,
+                      focusedBorder: InputBorder.none,
+                      disabledBorder: InputBorder.none,
                     ),
                     onChanged: (value) {
                       fullOtp = value;
@@ -217,7 +214,7 @@ class _OTPScreenState extends State<OTPScreen> {
                         style: TextStyle(
                           fontWeight: FontWeight.w600,
                           fontSize: 14,
-                          color: Colors.blue,
+                          color: Color(0xFF468585),
                         ),
                       ),
                     )
@@ -231,7 +228,7 @@ class _OTPScreenState extends State<OTPScreen> {
                 const Spacer(),
                 SizedBox(
                   width: double.infinity,
-                  height: 52,
+                  height: 50,
                   child: ElevatedButton.icon(
                     onPressed: verifyOTP,
                     icon: const Icon(Icons.login_rounded),
@@ -243,35 +240,15 @@ class _OTPScreenState extends State<OTPScreen> {
                       ),
                     ),
                     style: ElevatedButton.styleFrom(
-                      elevation: 2,
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(32),
+                        borderRadius: BorderRadius.circular(8),
                       ),
-                      backgroundColor: Colors.blue[700],
+                      backgroundColor: const Color(0xFF468585),
                       foregroundColor: Colors.white,
                     ),
                   ),
                 ),
-                const SizedBox(height: 32),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const Text(
-                      "Don’t have an account yet? ",
-                      style: TextStyle(color: Colors.black),
-                    ),
-                    GestureDetector(
-                      onTap: () => Navigator.pop(context),
-                      child: const Text(
-                        "Register",
-                        style: TextStyle(
-                          color: Colors.blueAccent,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
+                const SizedBox(height: 24),
               ],
             ),
           ),

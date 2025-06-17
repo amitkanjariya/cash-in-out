@@ -37,7 +37,7 @@ class _SplashScreenState extends State<SplashScreen>
     final prefs = await SharedPreferences.getInstance();
     final isLoggedIn = prefs.getBool('isLoggedIn') ?? false;
 
-    Timer(const Duration(seconds: 3), () {
+    Timer(const Duration(seconds: 2), () {
       if (isLoggedIn) {
         Navigator.pushReplacement(
           context,
@@ -69,16 +69,13 @@ class _SplashScreenState extends State<SplashScreen>
             ScaleTransition(
               scale: _animation,
               child: Image.asset(
-                'assets/images/logo1.png',
+                'assets/images/logo_cashinout1.png',
                 width: 200,
                 height: 200,
               ),
             ),
             const SizedBox(height: 24),
             const SizedBox(height: 12),
-            const CircularProgressIndicator(
-              valueColor: AlwaysStoppedAnimation<Color>(Colors.blue),
-            ),
           ],
         ),
       ),

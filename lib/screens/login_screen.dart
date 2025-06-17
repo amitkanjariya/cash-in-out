@@ -55,7 +55,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
                 // Bigger Logo
                 Image.asset(
-                  'assets/images/logo1.png',
+                  'assets/images/logo_cashinout1.png',
                   height: 130,
                   errorBuilder:
                       (context, error, stackTrace) =>
@@ -65,7 +65,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 const SizedBox(height: 20),
 
                 const Text(
-                  'Welcome to Cash In-Out',
+                  'Welcome to Cash In Out',
                   style: TextStyle(
                     fontSize: 24,
                     fontWeight: FontWeight.bold,
@@ -74,7 +74,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   textAlign: TextAlign.center,
                 ),
 
-                const SizedBox(height: 12),
+                const SizedBox(height: 40),
 
                 const Text(
                   'Enter your phone number to continue',
@@ -86,7 +86,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   textAlign: TextAlign.center,
                 ),
 
-                const SizedBox(height: 40),
+                const SizedBox(height: 12),
 
                 // Phone Number Field
                 TextField(
@@ -115,44 +115,22 @@ class _LoginScreenState extends State<LoginScreen> {
                   height: 50,
                   child: ElevatedButton.icon(
                     onPressed: goToOTP,
-                    icon: const Icon(Icons.login),
+                    icon: const Icon(Icons.login, color: Colors.white),
                     label: const Text(
                       'Generate OTP',
                       style: TextStyle(
                         fontSize: 16,
+                        color: Colors.white,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF1A73E8),
+                      backgroundColor: const Color(0xFF468585),
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(30),
+                        borderRadius: BorderRadius.circular(8),
                       ),
                     ),
                   ),
-                ),
-
-                const SizedBox(height: 20),
-
-                // Register Text
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const Text("Don’t have an account yet? "),
-                    GestureDetector(
-                      onTap: () {},
-                      child: const Text(
-                        "Register",
-                        style: TextStyle(
-                          color: Colors.blueAccent,
-                          fontWeight: FontWeight.w500,
-                          decoration:
-                              TextDecoration
-                                  .underline, // optional, to show it's clickable
-                        ),
-                      ),
-                    ),
-                  ],
                 ),
 
                 const SizedBox(height: 24),
