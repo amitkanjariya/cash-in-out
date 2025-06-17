@@ -35,6 +35,7 @@ class _CustomerDetailPageState extends State<CustomerDetailPage> {
   String? profileImageUrl;
   bool _showSummary = true;
   ScrollController? _scrollController;
+  bool isLoading = true;
 
   @override
   void initState() {
@@ -93,6 +94,9 @@ class _CustomerDetailPageState extends State<CustomerDetailPage> {
   }
 
   Future<void> fetchCustomerEntries() async {
+    setState(() {
+      isLoading = true;
+    });
     try {
       final response = await http.post(
         Uri.parse('${Constants.baseUrl}/get_customer_transactions.php'),
@@ -153,6 +157,10 @@ class _CustomerDetailPageState extends State<CustomerDetailPage> {
         entries = [];
         totalGave = 0;
         totalGot = 0;
+      });
+    } finally {
+      setState(() {
+        isLoading = false;
       });
     }
   }
@@ -257,7 +265,7 @@ class _CustomerDetailPageState extends State<CustomerDetailPage> {
         ),
         title: GestureDetector(
           onTap: () async {
-            await Navigator.push(
+            final updated = await Navigator.push(
               context,
               MaterialPageRoute(
                 builder:
@@ -267,7 +275,9 @@ class _CustomerDetailPageState extends State<CustomerDetailPage> {
                     ),
               ),
             );
-            await fetchCustomerDetails(); // Refresh customer details after profile update
+            if (updated == true) {
+              fetchCustomerDetails(); // only refresh if actually updated
+            } // Refresh customer details after profile update
           },
           child: Row(
             children: [
@@ -456,100 +466,108 @@ class _CustomerDetailPageState extends State<CustomerDetailPage> {
           ),
           const Divider(height: 1),
           Expanded(
-            child: RefreshIndicator(
-              onRefresh: _refreshEntries,
-              child: ListView.builder(
-                controller: _scrollController,
-                physics: const AlwaysScrollableScrollPhysics(),
-                itemCount: entries.length,
-                itemBuilder: (context, index) {
-                  final entry = entries[index];
-                  final String entryDate = entry['date'];
-                  final DateTime currentDate = DateTime.parse(entryDate);
-                  final String formattedDate = formatDateWithRelativeLabel(
-                    currentDate,
-                  );
+            child:
+                isLoading
+                    ? const Center(child: CircularProgressIndicator())
+                    : RefreshIndicator(
+                      onRefresh: _refreshEntries,
+                      child: ListView.builder(
+                        controller: _scrollController,
+                        physics: const AlwaysScrollableScrollPhysics(),
+                        itemCount: entries.length,
+                        itemBuilder: (context, index) {
+                          final entry = entries[index];
+                          final String entryDate = entry['date'];
+                          final DateTime currentDate = DateTime.parse(
+                            entryDate,
+                          );
+                          final String formattedDate =
+                              formatDateWithRelativeLabel(currentDate);
 
-                  bool showDateLabel = false;
-                  if (index == 0) {
-                    showDateLabel = true;
-                  } else {
-                    final previousDate = DateTime.parse(
-                      entries[index - 1]['date'],
-                    );
-                    showDateLabel = !isSameDate(currentDate, previousDate);
-                  }
+                          bool showDateLabel = false;
+                          if (index == 0) {
+                            showDateLabel = true;
+                          } else {
+                            final previousDate = DateTime.parse(
+                              entries[index - 1]['date'],
+                            );
+                            showDateLabel =
+                                !isSameDate(currentDate, previousDate);
+                          }
 
-                  return Column(
-                    children: [
-                      if (showDateLabel)
-                        Padding(
-                          padding: const EdgeInsets.symmetric(vertical: 10),
-                          child: Center(
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 5,
-                                vertical: 3,
-                              ),
-                              decoration: BoxDecoration(
-                                color: Colors.white,
-                                borderRadius: BorderRadius.circular(5),
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: Colors.grey.shade400,
-                                    blurRadius: 2,
-                                    offset: const Offset(0, 1),
+                          return Column(
+                            children: [
+                              if (showDateLabel)
+                                Padding(
+                                  padding: const EdgeInsets.symmetric(
+                                    vertical: 10,
                                   ),
-                                ],
-                              ),
-                              child: Text(
-                                formattedDate,
-                                style: const TextStyle(
-                                  fontSize: 10,
-                                  color: Colors.black87,
-                                  fontWeight: FontWeight.w500,
+                                  child: Center(
+                                    child: Container(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 5,
+                                        vertical: 3,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        color: Colors.white,
+                                        borderRadius: BorderRadius.circular(5),
+                                        boxShadow: [
+                                          BoxShadow(
+                                            color: Colors.grey.shade400,
+                                            blurRadius: 2,
+                                            offset: const Offset(0, 1),
+                                          ),
+                                        ],
+                                      ),
+                                      child: Text(
+                                        formattedDate,
+                                        style: const TextStyle(
+                                          fontSize: 10,
+                                          color: Colors.black87,
+                                          fontWeight: FontWeight.w500,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              GestureDetector(
+                                onTap: () async {
+                                  await Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder:
+                                          (_) => EntryDetailPage(
+                                            transactionId:
+                                                entry['transactionId'],
+                                            name: customerName,
+                                            dateTime: entry['date'],
+                                            amount:
+                                                entry['gave'].isNotEmpty
+                                                    ? entry['gave']
+                                                    : entry['got'],
+                                            type:
+                                                entry['gave'].isNotEmpty
+                                                    ? 'minus'
+                                                    : 'plus',
+                                            note: entry['note'] ?? '',
+                                          ),
+                                    ),
+                                  );
+                                  fetchCustomerEntries();
+                                },
+                                child: EntryRow(
+                                  date: entry['date'] ?? '',
+                                  balance: entry['balance'] ?? '',
+                                  gave: entry['gave'] ?? '',
+                                  got: entry['got'] ?? '',
+                                  note: entry['note'],
                                 ),
                               ),
-                            ),
-                          ),
-                        ),
-                      GestureDetector(
-                        onTap: () async {
-                          await Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder:
-                                  (_) => EntryDetailPage(
-                                    transactionId: entry['transactionId'],
-                                    name: customerName,
-                                    dateTime: entry['date'],
-                                    amount:
-                                        entry['gave'].isNotEmpty
-                                            ? entry['gave']
-                                            : entry['got'],
-                                    type:
-                                        entry['gave'].isNotEmpty
-                                            ? 'minus'
-                                            : 'plus',
-                                    note: entry['note'] ?? '',
-                                  ),
-                            ),
+                            ],
                           );
-                          fetchCustomerEntries();
                         },
-                        child: EntryRow(
-                          date: entry['date'] ?? '',
-                          balance: entry['balance'] ?? '',
-                          gave: entry['gave'] ?? '',
-                          got: entry['got'] ?? '',
-                          note: entry['note'],
-                        ),
                       ),
-                    ],
-                  );
-                },
-              ),
-            ),
+                    ),
           ),
         ],
       ),
@@ -559,14 +577,15 @@ class _CustomerDetailPageState extends State<CustomerDetailPage> {
           children: [
             Expanded(
               child: ElevatedButton(
-                onPressed: () {
-                  Navigator.push(
+                onPressed: () async {
+                  await Navigator.push(
                     context,
                     MaterialPageRoute(
                       builder:
                           (_) => YouGavePage(customerId: widget.customerId),
                     ),
                   );
+                  fetchCustomerEntries();
                 },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.red,
@@ -586,13 +605,14 @@ class _CustomerDetailPageState extends State<CustomerDetailPage> {
             const SizedBox(width: 12),
             Expanded(
               child: ElevatedButton(
-                onPressed: () {
-                  Navigator.push(
+                onPressed: () async {
+                  await Navigator.push(
                     context,
                     MaterialPageRoute(
                       builder: (_) => YouGotPage(customerId: widget.customerId),
                     ),
                   );
+                  fetchCustomerEntries();
                 },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.green,

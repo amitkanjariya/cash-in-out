@@ -24,12 +24,16 @@ class _CustomerProfilePageState extends State<CustomerProfilePage> {
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _phoneController = TextEditingController();
   String? _profileImageUrl;
+  String? _initialName;
   File? _imageFile;
+  bool _hasChanges = false;
+
   final _onlyLetters = FilteringTextInputFormatter.allow(RegExp(r'[a-zA-Z\s]'));
 
   @override
   void initState() {
     super.initState();
+    _nameController.addListener(_checkForChanges);
     _fetchCustomerProfileData();
   }
 
@@ -44,7 +48,8 @@ class _CustomerProfilePageState extends State<CustomerProfilePage> {
       if (jsonResponse['success'] == true) {
         final data = jsonResponse['data'];
         setState(() {
-          _nameController.text = data['name'] ?? 'No Name';
+          _initialName = data['name'] ?? '';
+          _nameController.text = _initialName!;
           _phoneController.text = data['phone'] ?? 'No Phone';
           _profileImageUrl = data['profile_image'] ?? '';
         });
@@ -63,12 +68,21 @@ class _CustomerProfilePageState extends State<CustomerProfilePage> {
     }
   }
 
+  void _checkForChanges() {
+    final nameChanged = _nameController.text.trim() != (_initialName ?? '');
+    final imageChanged = _imageFile != null;
+    setState(() {
+      _hasChanges = nameChanged || imageChanged;
+    });
+  }
+
   Future<void> _pickImage() async {
     final picked = await ImagePicker().pickImage(source: ImageSource.gallery);
     if (picked != null) {
       setState(() {
         _imageFile = File(picked.path);
       });
+      _checkForChanges();
     }
   }
 
@@ -81,6 +95,7 @@ class _CustomerProfilePageState extends State<CustomerProfilePage> {
     request.fields['customer_id'] = widget.customerId;
     request.fields['name'] = _nameController.text.trim();
     request.fields['phone'] = _phoneController.text.trim();
+
     if (_imageFile != null) {
       request.files.add(
         await http.MultipartFile.fromPath('profile_image', _imageFile!.path),
@@ -96,7 +111,7 @@ class _CustomerProfilePageState extends State<CustomerProfilePage> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(jsonResponse['message'] ?? 'Profile updated')),
         );
-        _fetchCustomerProfileData(); // Refresh image
+        Navigator.pop(context, true); // Go back and indicate update
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(jsonResponse['message'] ?? 'Update failed')),
@@ -121,7 +136,7 @@ class _CustomerProfilePageState extends State<CustomerProfilePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: Colors.blue[800],
+        backgroundColor: Color(0xFF468585),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.white),
           onPressed: () => Navigator.pop(context),
@@ -137,7 +152,7 @@ class _CustomerProfilePageState extends State<CustomerProfilePage> {
           child: Column(
             children: [
               const SizedBox(height: 24),
-              // Profile Image Picker and Preview
+
               GestureDetector(
                 onTap: _pickImage,
                 child: CircleAvatar(
@@ -155,7 +170,6 @@ class _CustomerProfilePageState extends State<CustomerProfilePage> {
                 "Tap image to change",
                 style: TextStyle(color: Colors.grey),
               ),
-
               const SizedBox(height: 20),
 
               TextField(
@@ -176,13 +190,14 @@ class _CustomerProfilePageState extends State<CustomerProfilePage> {
                 ),
               ),
               const SizedBox(height: 16),
+
               SizedBox(
                 width: double.infinity,
                 height: 48,
                 child: ElevatedButton(
-                  onPressed: _saveCustomerProfile,
+                  onPressed: _hasChanges ? _saveCustomerProfile : null,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.blue[800],
+                    backgroundColor: Color(0xFF468585),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(8),
                     ),

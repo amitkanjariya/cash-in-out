@@ -242,18 +242,29 @@ class _CustomerListPageState extends State<CustomerListPage> {
         title: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            const Row(
+            Row(
               children: [
-                Icon(Icons.book, color: Colors.white),
-                SizedBox(width: 8),
-                Text(
-                  'Cash In Out',
-                  style: TextStyle(color: Colors.white, fontSize: 20),
+                Image.asset(
+                  'assets/images/logo2.png',
+                  height: 40, // slightly taller for better readability
+                ),
+                const SizedBox(width: 12),
+                const Text(
+                  'Cash In-Out',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 23,
+                    fontWeight: FontWeight.w500,
+                  ),
                 ),
               ],
             ),
             IconButton(
-              icon: const Icon(Icons.account_circle, color: Colors.white),
+              icon: const Icon(
+                Icons.account_circle,
+                color: Colors.white,
+                size: 28,
+              ),
               onPressed: () {
                 Navigator.push(
                   context,
@@ -275,11 +286,22 @@ class _CustomerListPageState extends State<CustomerListPage> {
             child:
                 isLoading
                     ? const Center(child: CircularProgressIndicator())
+                    : filteredTransactions.isEmpty
+                    ? const Center(
+                      child: Text(
+                        'No Transactions Found',
+                        style: TextStyle(
+                          fontSize: 16,
+                          color: Colors.black54,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    )
                     : RefreshIndicator(
                       onRefresh: fetchTransactions,
                       child: ListView.builder(
                         physics:
-                            const AlwaysScrollableScrollPhysics(), // Ensures pull works even when few items
+                            const AlwaysScrollableScrollPhysics(), // Pull-to-refresh always
                         itemCount: filteredTransactions.length,
                         itemBuilder: (context, index) {
                           final transaction = filteredTransactions[index];
@@ -292,8 +314,8 @@ class _CustomerListPageState extends State<CustomerListPage> {
                                     : "You'll Get",
                             time: transaction.createdAt,
                             isCredit: transaction.type == 'plus',
-                            onTap: () {
-                              Navigator.push(
+                            onTap: () async {
+                              await Navigator.push(
                                 context,
                                 MaterialPageRoute(
                                   builder:
@@ -304,6 +326,7 @@ class _CustomerListPageState extends State<CustomerListPage> {
                                       ),
                                 ),
                               );
+                              fetchTransactions();
                             },
                           );
                         },

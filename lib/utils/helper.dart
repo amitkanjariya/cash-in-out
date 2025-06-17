@@ -29,7 +29,9 @@ String formatDateWithRelativeLabel(DateTime date) {
       "${date.day.toString().padLeft(2, '0')} "
       "${_monthShortName(date.month)} "
       "${date.year.toString().substring(2)}";
-
+  if (difference < 0) {
+    return baseDate;
+  }
   String label;
   if (difference == 0) {
     label = "Today";
@@ -67,6 +69,26 @@ String _monthShortName(int month) {
     "Dec",
   ];
   return months[month - 1];
+}
+
+// Add this method for month name
+String _monthName(int month) {
+  const months = [
+    '',
+    'Jan',
+    'Feb',
+    'Mar',
+    'Apr',
+    'May',
+    'Jun',
+    'Jul',
+    'Aug',
+    'Sep',
+    'Oct',
+    'Nov',
+    'Dec',
+  ];
+  return months[month];
 }
 
 String getInitials(String name) {

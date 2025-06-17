@@ -81,11 +81,7 @@ class _MorePageState extends State<MorePage> {
         centerTitle: true, // ✅ This centers the title
         title: const Text(
           'Profile',
-          style: TextStyle(
-            fontSize: 25,
-            color: Colors.white,
-            fontWeight: FontWeight.w500,
-          ),
+          style: TextStyle(color: Colors.white, fontWeight: FontWeight.w500),
         ),
       ),
 

@@ -534,6 +534,10 @@ class _CustomerReportPageState extends State<CustomerReportPage> {
           style: const TextStyle(color: Colors.white),
         ),
         centerTitle: true,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: Colors.white),
+          onPressed: () => Navigator.pop(context),
+        ),
       ),
       body: Column(
         children: [
@@ -816,7 +820,7 @@ class _CustomerReportPageState extends State<CustomerReportPage> {
             child: TextField(
               onChanged: updateSearchQuery,
               decoration: InputDecoration(
-                hintText: 'Search Customer',
+                hintText: 'Search Entries',
                 prefixIcon: const Icon(Icons.search),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),

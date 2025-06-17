@@ -23,7 +23,7 @@ class _AddCustomerPageState extends State<AddCustomerPage> {
         ),
         backgroundColor: Color(0xFF468585),
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
+          icon: const Icon(Icons.arrow_back, color: Colors.white),
           onPressed: () => Navigator.pop(context),
         ),
       ),

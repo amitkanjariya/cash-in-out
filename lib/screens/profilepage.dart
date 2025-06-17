@@ -240,9 +240,21 @@ class _ProfilePageState extends State<ProfilePage> {
                           ? FileImage(_imageFile!)
                           : (_profileImageUrl != null
                               ? NetworkImage(_profileImageUrl!) as ImageProvider
-                              : const AssetImage('assets/images/logo1.png')),
+                              : null), // null to use child instead
+                  child:
+                      (_imageFile == null && _profileImageUrl == null)
+                          ? const Icon(
+                            Icons.person,
+                            size: 60,
+                            color: Colors.white,
+                          )
+                          : null,
+                  backgroundColor: const Color(
+                    0xFFCCCCCC,
+                  ), // Optional grey background
                 ),
               ),
+
               const SizedBox(height: 12),
               const Text(
                 "Tap image to change",

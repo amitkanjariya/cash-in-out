@@ -531,6 +531,7 @@ class _ReportPageState extends State<ReportPage> {
     return Scaffold(
       backgroundColor: Colors.grey[100],
       appBar: AppBar(
+        iconTheme: const IconThemeData(color: Colors.white),
         backgroundColor: Color(0xFF468585),
         title: const Text('View Report', style: TextStyle(color: Colors.white)),
         centerTitle: true,
