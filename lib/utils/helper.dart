@@ -7,7 +7,7 @@ String formatDateTimeHelper(String rawDateTime) {
     final formattedTime = DateFormat("h:mm a").format(dateTime);
     return "$formattedDate · $formattedTime";
   } catch (e) {
-    return rawDateTime; // fallback in case of parse error
+    return rawDateTime;
   }
 }
 
@@ -71,26 +71,6 @@ String _monthShortName(int month) {
   return months[month - 1];
 }
 
-// Add this method for month name
-String _monthName(int month) {
-  const months = [
-    '',
-    'Jan',
-    'Feb',
-    'Mar',
-    'Apr',
-    'May',
-    'Jun',
-    'Jul',
-    'Aug',
-    'Sep',
-    'Oct',
-    'Nov',
-    'Dec',
-  ];
-  return months[month];
-}
-
 String getInitials(String name) {
   if (name.trim().isEmpty) return '';
 
@@ -104,12 +84,11 @@ String getInitials(String name) {
 
 String formatAmount(String amount) {
   try {
-    // Remove commas and parse to double
     final number = double.parse(amount.replaceAll(',', ''));
-    final absNumber = number.abs(); // Make it absolute
+    final absNumber = number.abs();
     final formatter = NumberFormat('#,##,##,###.##', 'en_IN');
     return formatter.format(absNumber);
   } catch (e) {
-    return amount; // fallback if parsing fails
+    return amount;
   }
 }

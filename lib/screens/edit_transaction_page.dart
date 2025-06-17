@@ -43,13 +43,11 @@ class _EditTransactionPageState extends State<EditTransactionPage> {
     final noteText = _noteController.text.trim();
     final dateText = _selectedDate.toIso8601String().substring(0, 10);
 
-    // Validation: Empty or zero amount
     if (amountText.isEmpty || double.tryParse(amountText) == 0) {
       _showError("Please enter a valid amount greater than 0");
       return;
     }
 
-    // Validation: No field has changed
     final originalAmount = widget.initialAmount.trim();
     final originalNote = widget.initialNote.trim();
     final originalDate = widget.initialDate.substring(0, 10);
@@ -61,7 +59,6 @@ class _EditTransactionPageState extends State<EditTransactionPage> {
       return;
     }
 
-    // Proceed with update
     final response = await http.post(
       Uri.parse('${Constants.baseUrl}/update_transaction.php'),
       body: {
@@ -75,11 +72,8 @@ class _EditTransactionPageState extends State<EditTransactionPage> {
     try {
       final result = json.decode(response.body);
       if (result['success'] == true) {
-        Navigator.pop(context, {
-          'amount': amountText,
-          'detail': noteText,
-          'created_at': _selectedDate.toIso8601String(),
-        });
+        Navigator.pop(context);
+        Navigator.pop(context);
       } else {
         _showError(result['message']);
       }
@@ -128,7 +122,6 @@ class _EditTransactionPageState extends State<EditTransactionPage> {
         padding: const EdgeInsets.all(16),
         child: Column(
           children: [
-            // Amount input
             TextField(
               controller: _amountController,
               keyboardType: TextInputType.number,
@@ -144,7 +137,6 @@ class _EditTransactionPageState extends State<EditTransactionPage> {
             ),
             const SizedBox(height: 16),
 
-            // Note input
             TextField(
               controller: _noteController,
               decoration: InputDecoration(
@@ -157,7 +149,6 @@ class _EditTransactionPageState extends State<EditTransactionPage> {
             ),
             const SizedBox(height: 16),
 
-            // Date picker
             Align(
               alignment: Alignment.centerLeft,
               child: ElevatedButton.icon(
@@ -180,7 +171,6 @@ class _EditTransactionPageState extends State<EditTransactionPage> {
 
             const Spacer(),
 
-            // Save button
             ElevatedButton(
               onPressed: _saveTransaction,
               style: ElevatedButton.styleFrom(

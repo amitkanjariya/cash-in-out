@@ -157,14 +157,27 @@ class _CustomerProfilePageState extends State<CustomerProfilePage> {
                 onTap: _pickImage,
                 child: CircleAvatar(
                   radius: 60,
+                  backgroundColor: const Color(0xFFCCCCCC),
                   backgroundImage:
                       _imageFile != null
                           ? FileImage(_imageFile!)
-                          : (_profileImageUrl != null
-                              ? NetworkImage(_profileImageUrl!) as ImageProvider
-                              : const AssetImage('assets/images/logo1.png')),
+                          : (_profileImageUrl != null &&
+                                  _profileImageUrl!.isNotEmpty
+                              ? NetworkImage(_profileImageUrl!)
+                              : null),
+                  child:
+                      _imageFile == null &&
+                              (_profileImageUrl == null ||
+                                  _profileImageUrl!.isEmpty)
+                          ? const Icon(
+                            Icons.person,
+                            size: 60,
+                            color: Colors.white,
+                          )
+                          : null,
                 ),
               ),
+
               const SizedBox(height: 12),
               const Text(
                 "Tap image to change",

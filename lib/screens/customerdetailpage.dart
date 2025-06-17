@@ -72,10 +72,8 @@ class _CustomerDetailPageState extends State<CustomerDetailPage> {
       );
       final jsonResponse = jsonDecode(response.body);
       print("user_id: ${widget.userId}");
-      print("customer_id: ${widget.customerId}");
       if (jsonResponse['success'] == true) {
         final data = jsonResponse['data'];
-        print("customer data: $data");
         setState(() {
           customerName = data['name'] ?? 'No Name';
           customerPhone = data['phone'] ?? '';
@@ -550,6 +548,7 @@ class _CustomerDetailPageState extends State<CustomerDetailPage> {
                                                     ? 'minus'
                                                     : 'plus',
                                             note: entry['note'] ?? '',
+                                            profileImageUrl: profileImageUrl,
                                           ),
                                     ),
                                   );
