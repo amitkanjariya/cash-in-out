@@ -553,7 +553,6 @@ class _ReportPageState extends State<ReportPage> {
             const Divider(height: 1),
 
             buildStickyHeaderSummary(),
-            buildHeaderRow(),
             const Divider(height: 1),
             Expanded(child: buildTransactionList()),
           ],
@@ -611,6 +610,8 @@ class _ReportPageState extends State<ReportPage> {
   }
 
   Widget buildBalanceCard() {
+    final netBalance = totalGet - totalGive;
+
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -626,10 +627,12 @@ class _ReportPageState extends State<ReportPage> {
             style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
           ),
           Text(
-            "₹ ${formatAmount((totalGet - totalGive).abs().toStringAsFixed(2))}",
+            netBalance == 0
+                ? "₹ 0"
+                : "₹ ${formatAmount(netBalance.abs().toStringAsFixed(2))}",
             style: TextStyle(
               fontSize: 18,
-              color: (totalGet - totalGive) >= 0 ? Colors.green : Colors.red,
+              color: netBalance >= 0 ? Colors.green : Colors.red,
               fontWeight: FontWeight.bold,
             ),
           ),
@@ -644,7 +647,7 @@ class _ReportPageState extends State<ReportPage> {
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
       child: Row(
         children: [
-          // ENTRIES (left-aligned)
+          // Total Entries (left-aligned)
           Expanded(
             flex: 2,
             child: buildSummaryColumn(
@@ -652,25 +655,63 @@ class _ReportPageState extends State<ReportPage> {
               "${filteredTransactions.length}",
             ),
           ),
-          // YOU GAVE (center-aligned)
+
+          // You Gave (right-aligned inside its flex)
           Expanded(
-            child: Center(
-              child: buildSummaryColumn(
-                "You Gave",
-                "₹ ${formatAmount(totalGive.toStringAsFixed(0))}",
-                color: Colors.red,
-              ),
+            flex: 1,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                Text(
+                  "You Gave",
+                  style: const TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w500,
+                    color: Colors.black54,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  totalGive == 0
+                      ? "-"
+                      : "₹ ${formatAmount(totalGive.toStringAsFixed(0))}",
+                  style: const TextStyle(
+                    color: Colors.red,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
             ),
           ),
-          // YOU GOT (right-aligned)
+
+          const SizedBox(width: 24), // spacing between gave and got
+          // You Got (right-aligned inside its flex)
           Expanded(
-            child: Align(
-              alignment: Alignment.centerRight,
-              child: buildSummaryColumn(
-                "You Got",
-                "₹ ${formatAmount(totalGet.toStringAsFixed(0))}",
-                color: Colors.green,
-              ),
+            flex: 1,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                Text(
+                  "You Got",
+                  style: const TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w500,
+                    color: Colors.black54,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  totalGet == 0
+                      ? "-"
+                      : "₹ ${formatAmount(totalGet.toStringAsFixed(0))}",
+                  style: const TextStyle(
+                    color: Colors.green,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
             ),
           ),
         ],
@@ -698,42 +739,13 @@ class _ReportPageState extends State<ReportPage> {
     );
   }
 
-  Widget buildHeaderRow() {
-    return Container(
-      color: Colors.grey[200],
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      child: const Row(
-        children: [
-          Expanded(
-            flex: 2,
-            child: Text(
-              'ENTRIES',
-              style: TextStyle(fontWeight: FontWeight.bold),
-            ),
-          ),
-          Expanded(
-            child: Text(
-              'YOU GAVE',
-              style: TextStyle(fontWeight: FontWeight.bold),
-            ),
-          ),
-          Expanded(
-            child: Align(
-              alignment: Alignment.centerRight,
-              child: Text(
-                'YOU GOT',
-                style: TextStyle(fontWeight: FontWeight.bold),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
   Widget buildTransactionList() {
     if (isLoading) {
-      return const Center(child: CircularProgressIndicator());
+      return const Center(
+        child: CircularProgressIndicator(
+          color: Color(0xFF468585), // 👈 your custom color
+        ),
+      );
     } else if (filteredTransactions.isEmpty) {
       return const Center(child: Text('No transactions found'));
     } else {

@@ -237,7 +237,11 @@ class _YouGotPageState extends State<YouGotPage> {
               onPressed: _isLoading ? null : _submitTransaction,
               child:
                   _isLoading
-                      ? const CircularProgressIndicator(color: Colors.black)
+                      ? const Center(
+                        child: CircularProgressIndicator(
+                          color: Color(0xFF468585), // 👈 your custom color
+                        ),
+                      )
                       : const Text(
                         'Done',
                         style: TextStyle(color: Colors.white, fontSize: 16),

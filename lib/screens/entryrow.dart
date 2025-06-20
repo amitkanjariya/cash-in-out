@@ -16,18 +16,18 @@ class EntryRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        border: Border(
-          bottom: BorderSide(color: Colors.grey.shade300, width: 1),
-        ),
-      ),
-      child: Row(
-        children: [
-          Expanded(
-            flex: 2,
+    final bool hasGave = gave.isNotEmpty && gave != "0";
+    final String gaveDisplay = hasGave ? "₹ $gave" : "";
+    final String gotDisplay = (got.isEmpty || got == "0") ? "" : "₹ $got";
+
+    return Row(
+      children: [
+        // Name and Date
+        Expanded(
+          flex: 3,
+          child: Container(
+            color: Colors.white,
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -48,28 +48,37 @@ class EntryRow extends StatelessWidget {
               ],
             ),
           ),
-          Expanded(
-            flex: 1,
-            child: Container(
-              padding: const EdgeInsets.symmetric(vertical: 15, horizontal: 8),
-              decoration: BoxDecoration(color: Colors.red.shade50),
-              child: Text(
-                gave,
-                textAlign: TextAlign.center,
-                style: const TextStyle(
-                  color: Colors.red,
-                  fontWeight: FontWeight.w600,
-                  fontSize: 14,
-                ),
+        ),
+
+        // Gave (Full red background if applicable)
+        Expanded(
+          flex: 2,
+          child: Container(
+            color: Colors.red.shade50,
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 16),
+            alignment: Alignment.centerRight,
+            child: Text(
+              gaveDisplay,
+              textAlign: TextAlign.right,
+              style: const TextStyle(
+                color: Colors.red,
+                fontWeight: FontWeight.w600,
+                fontSize: 14,
               ),
             ),
           ),
-          const SizedBox(width: 16),
-          Expanded(
-            flex: 1,
+        ),
+
+        // Got
+        Expanded(
+          flex: 2,
+          child: Container(
+            color: Colors.white,
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 16),
+            alignment: Alignment.centerRight,
             child: Text(
-              got,
-              textAlign: TextAlign.center,
+              gotDisplay,
+              textAlign: TextAlign.right,
               style: const TextStyle(
                 color: Colors.green,
                 fontWeight: FontWeight.w600,
@@ -77,8 +86,8 @@ class EntryRow extends StatelessWidget {
               ),
             ),
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 }

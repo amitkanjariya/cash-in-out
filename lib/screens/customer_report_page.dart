@@ -561,7 +561,11 @@ class _CustomerReportPageState extends State<CustomerReportPage> {
 
   Widget _buildTransactionList() {
     if (isLoading) {
-      return const Center(child: CircularProgressIndicator());
+      return const Center(
+        child: CircularProgressIndicator(
+          color: Color(0xFF468585), // 👈 your custom color
+        ),
+      );
     }
 
     if (entries.isEmpty) {

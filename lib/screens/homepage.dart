@@ -280,7 +280,11 @@ class _CustomerListPageState extends State<CustomerListPage> {
           Expanded(
             child:
                 isLoading
-                    ? const Center(child: CircularProgressIndicator())
+                    ? const Center(
+                      child: CircularProgressIndicator(
+                        color: Color(0xFF468585),
+                      ),
+                    )
                     : filteredTransactions.isEmpty
                     ? const Center(
                       child: Text(
@@ -294,6 +298,7 @@ class _CustomerListPageState extends State<CustomerListPage> {
                     )
                     : RefreshIndicator(
                       onRefresh: fetchTransactions,
+                      color: const Color(0xFF468585),
                       child: ListView.builder(
                         physics: const AlwaysScrollableScrollPhysics(),
                         itemCount: filteredTransactions.length,
@@ -505,9 +510,10 @@ class CustomerTile extends StatelessWidget {
 
         title: Text(name, style: const TextStyle(fontWeight: FontWeight.w600)),
         subtitle: Text(
-          formatDateTimeHelper(time),
+          buildRelativeTime(time),
           style: const TextStyle(fontSize: 12),
         ),
+
         trailing: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           crossAxisAlignment: CrossAxisAlignment.end,

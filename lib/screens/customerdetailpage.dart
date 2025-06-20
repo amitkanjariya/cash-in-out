@@ -466,9 +466,14 @@ class _CustomerDetailPageState extends State<CustomerDetailPage> {
           Expanded(
             child:
                 isLoading
-                    ? const Center(child: CircularProgressIndicator())
+                    ? const Center(
+                      child: CircularProgressIndicator(
+                        color: Color(0xFF468585), // 👈 your custom color
+                      ),
+                    )
                     : RefreshIndicator(
                       onRefresh: _refreshEntries,
+                      color: const Color(0xFF468585),
                       child: ListView.builder(
                         controller: _scrollController,
                         physics: const AlwaysScrollableScrollPhysics(),
@@ -677,9 +682,13 @@ class EntryRow extends StatelessWidget {
         parsedBalance < 0 ? Colors.red.shade50 : Colors.green.shade50;
     final Color textColor = parsedBalance < 0 ? Colors.red : Colors.green;
 
+    String formatDisplayAmount(String value, Color color) {
+      if (value.isEmpty || double.tryParse(value) == 0) return '';
+      return '₹ ${formatAmount(value)}';
+    }
+
     return Container(
       margin: const EdgeInsets.symmetric(vertical: 4, horizontal: 12),
-
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(8),
@@ -689,6 +698,7 @@ class EntryRow extends StatelessWidget {
       ),
       child: Row(
         children: [
+          // Date and Balance Column
           Expanded(
             flex: 2,
             child: Padding(
@@ -711,7 +721,7 @@ class EntryRow extends StatelessWidget {
                       borderRadius: BorderRadius.circular(4),
                     ),
                     child: Text(
-                      'Bal. ${formatAmount(parsedBalance.abs().toString())}',
+                      'Bal. ₹ ${formatAmount(parsedBalance.abs().toString())}',
                       style: TextStyle(
                         fontSize: 10,
                         color: textColor,
@@ -724,14 +734,14 @@ class EntryRow extends StatelessWidget {
             ),
           ),
 
-          /// YOU GAVE with red background
+          // Gave Column
           Expanded(
             child: Container(
               color: const Color(0xFFFFEBEE),
-              padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 20),
-              alignment: Alignment.center,
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 20),
+              alignment: Alignment.centerRight,
               child: Text(
-                formatAmount(gave),
+                formatDisplayAmount(gave, Colors.red),
                 style: const TextStyle(
                   color: Colors.red,
                   fontWeight: FontWeight.bold,
@@ -740,14 +750,17 @@ class EntryRow extends StatelessWidget {
             ),
           ),
 
-          /// YOU GOT (unchanged)
+          // Got Column
           Expanded(
-            child: Text(
-              formatAmount(got),
-              textAlign: TextAlign.center,
-              style: const TextStyle(
-                color: Colors.green,
-                fontWeight: FontWeight.bold,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 20),
+              alignment: Alignment.centerRight,
+              child: Text(
+                formatDisplayAmount(got, Colors.green),
+                style: const TextStyle(
+                  color: Colors.green,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
             ),
           ),

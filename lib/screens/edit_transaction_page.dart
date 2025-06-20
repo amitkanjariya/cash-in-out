@@ -36,6 +36,10 @@ class _EditTransactionPageState extends State<EditTransactionPage> {
     _noteController = TextEditingController(text: widget.initialNote);
     _selectedDate = DateTime.parse(widget.initialDate);
     _transactionType = widget.initialType;
+
+    _amountController.addListener(() {
+      setState(() {}); // Rebuilds to reflect amount change in AppBar title
+    });
   }
 
   void _saveTransaction() async {
@@ -100,6 +104,13 @@ class _EditTransactionPageState extends State<EditTransactionPage> {
         _selectedDate = picked;
       });
     }
+  }
+
+  @override
+  void dispose() {
+    _amountController.dispose();
+    _noteController.dispose();
+    super.dispose();
   }
 
   @override

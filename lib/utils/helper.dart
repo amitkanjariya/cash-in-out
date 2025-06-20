@@ -92,3 +92,12 @@ String formatAmount(String amount) {
     return amount;
   }
 }
+
+String buildRelativeTime(String time) {
+  try {
+    final parsedDate = DateTime.parse(time);
+    return formatDateWithRelativeLabel(parsedDate);
+  } catch (e) {
+    return time;
+  }
+}
