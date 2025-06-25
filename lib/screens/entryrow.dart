@@ -22,9 +22,8 @@ class EntryRow extends StatelessWidget {
 
     return Row(
       children: [
-        // Name and Date
         Expanded(
-          flex: 3,
+          flex: 4,
           child: Container(
             color: Colors.white,
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
@@ -50,9 +49,8 @@ class EntryRow extends StatelessWidget {
           ),
         ),
 
-        // Gave (Full red background if applicable)
         Expanded(
-          flex: 2,
+          flex: 3,
           child: Container(
             color: Colors.red.shade50,
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 16),
@@ -69,9 +67,8 @@ class EntryRow extends StatelessWidget {
           ),
         ),
 
-        // Got
         Expanded(
-          flex: 2,
+          flex: 3,
           child: Container(
             color: Colors.white,
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 16),

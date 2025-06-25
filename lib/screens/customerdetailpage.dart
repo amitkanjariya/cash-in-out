@@ -108,7 +108,6 @@ class _CustomerDetailPageState extends State<CustomerDetailPage> {
         double got = 0.0;
         double balance = 0.0;
 
-        // Start from the end and calculate balance backward
         for (var i = data['data'].length - 1; i >= 0; i--) {
           var item = data['data'][i];
           String type = item['type'] ?? '';
@@ -164,7 +163,7 @@ class _CustomerDetailPageState extends State<CustomerDetailPage> {
   }
 
   Future<void> _refreshEntries() async {
-    await fetchCustomerEntries(); // Replace with your actual data-fetching method
+    await fetchCustomerEntries();
     setState(() {});
   }
 
@@ -256,12 +255,14 @@ class _CustomerDetailPageState extends State<CustomerDetailPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: Color(0xFF468585),
+        backgroundColor: const Color(0xFF468585),
+        toolbarHeight: 60,
+        titleSpacing: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.white),
           onPressed: () => Navigator.pop(context),
         ),
-        title: GestureDetector(
+        title: InkWell(
           onTap: () async {
             final updated = await Navigator.push(
               context,
@@ -274,41 +275,62 @@ class _CustomerDetailPageState extends State<CustomerDetailPage> {
               ),
             );
             if (updated == true) {
-              fetchCustomerDetails(); // only refresh if actually updated
-            } // Refresh customer details after profile update
+              fetchCustomerDetails();
+            }
           },
-          child: Row(
-            children: [
-              CircleAvatar(
-                backgroundColor: Colors.white,
-                backgroundImage:
-                    profileImageUrl != null
-                        ? NetworkImage(profileImageUrl!) as ImageProvider
-                        : null,
-                child:
-                    profileImageUrl == null
-                        ? Text(
-                          getInitials(customerName),
-                          style: const TextStyle(color: Color(0xFF468585)),
-                        )
-                        : null,
-              ),
-
-              const SizedBox(width: 8),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    customerName,
-                    style: const TextStyle(color: Colors.white, fontSize: 16),
+          child: Padding(
+            padding: const EdgeInsets.only(left: 8),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    border: Border.all(color: Colors.white, width: 2),
                   ),
-                  Text(
-                    customerPhone,
-                    style: const TextStyle(color: Colors.white70, fontSize: 12),
+                  child: CircleAvatar(
+                    radius: 18,
+                    backgroundColor: Colors.white,
+                    backgroundImage:
+                        profileImageUrl != null
+                            ? NetworkImage(profileImageUrl!)
+                            : null,
+                    child:
+                        profileImageUrl == null
+                            ? Text(
+                              getInitials(customerName),
+                              style: const TextStyle(color: Color(0xFF468585)),
+                            )
+                            : null,
                   ),
-                ],
-              ),
-            ],
+                ),
+                const SizedBox(width: 10),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      customerName,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 16,
+                        fontWeight: FontWeight.w500,
+                      ),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      customerPhone,
+                      style: const TextStyle(
+                        color: Colors.white70,
+                        fontSize: 12,
+                      ),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
+                ),
+              ],
+            ),
           ),
         ),
         actions: [
@@ -435,17 +457,18 @@ class _CustomerDetailPageState extends State<CustomerDetailPage> {
           const SizedBox(height: 4),
           Container(
             color: Colors.grey[200],
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
             child: Row(
               children: const [
                 Expanded(
-                  flex: 2,
+                  flex: 4,
                   child: Text(
                     'ENTRIES',
                     style: TextStyle(fontWeight: FontWeight.bold),
                   ),
                 ),
                 Expanded(
+                  flex: 3,
                   child: Text(
                     'YOU GAVE',
                     textAlign: TextAlign.right,
@@ -453,6 +476,7 @@ class _CustomerDetailPageState extends State<CustomerDetailPage> {
                   ),
                 ),
                 Expanded(
+                  flex: 3,
                   child: Text(
                     'YOU GOT',
                     textAlign: TextAlign.right,
@@ -468,7 +492,7 @@ class _CustomerDetailPageState extends State<CustomerDetailPage> {
                 isLoading
                     ? const Center(
                       child: CircularProgressIndicator(
-                        color: Color(0xFF468585), // 👈 your custom color
+                        color: Color(0xFF468585),
                       ),
                     )
                     : RefreshIndicator(
@@ -688,7 +712,7 @@ class EntryRow extends StatelessWidget {
     }
 
     return Container(
-      margin: const EdgeInsets.symmetric(vertical: 4, horizontal: 12),
+      margin: const EdgeInsets.symmetric(vertical: 4, horizontal: 6),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(8),
@@ -698,9 +722,8 @@ class EntryRow extends StatelessWidget {
       ),
       child: Row(
         children: [
-          // Date and Balance Column
           Expanded(
-            flex: 2,
+            flex: 4,
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
               child: Column(
@@ -734,32 +757,34 @@ class EntryRow extends StatelessWidget {
             ),
           ),
 
-          // Gave Column
           Expanded(
+            flex: 3,
             child: Container(
               color: const Color(0xFFFFEBEE),
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 20),
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 22),
               alignment: Alignment.centerRight,
               child: Text(
                 formatDisplayAmount(gave, Colors.red),
                 style: const TextStyle(
                   color: Colors.red,
                   fontWeight: FontWeight.bold,
+                  fontSize: 13,
                 ),
               ),
             ),
           ),
 
-          // Got Column
           Expanded(
+            flex: 3,
             child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 20),
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 22),
               alignment: Alignment.centerRight,
               child: Text(
                 formatDisplayAmount(got, Colors.green),
                 style: const TextStyle(
                   color: Colors.green,
                   fontWeight: FontWeight.bold,
+                  fontSize: 13,
                 ),
               ),
             ),

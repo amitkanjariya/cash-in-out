@@ -30,7 +30,7 @@ class _ReportPageState extends State<ReportPage> {
   String selectedSort = 'None';
   DateTime? startDate;
   DateTime? endDate;
-  String selectedFilter = 'All'; // For filtering (date/income/expense)
+  String selectedFilter = 'All';
   ScrollController _scrollController = ScrollController();
   bool _showHeader = true;
   double _previousOffset = 0;
@@ -158,14 +158,12 @@ class _ReportPageState extends State<ReportPage> {
         transactions.where((tx) {
           DateTime txDate = DateTime.tryParse(tx.createdAt) ?? DateTime(2000);
 
-          // Date filter
           if (startDate != null && txDate.isBefore(startDate!)) return false;
           if (endDate != null &&
               txDate.isAfter(endDate!.add(const Duration(days: 1)))) {
             return false;
           }
 
-          // Text search filter
           if (searchQuery.isNotEmpty &&
               !(tx.contactName.toLowerCase().contains(searchQuery) ||
                   tx.contactPhone.toLowerCase().contains(searchQuery) ||
@@ -173,7 +171,6 @@ class _ReportPageState extends State<ReportPage> {
             return false;
           }
 
-          // Income/Expense filter
           if (selectedFilter == 'Expense' && tx.type != 'minus') return false;
           if (selectedFilter == 'Income' && tx.type != 'plus') return false;
 
@@ -343,7 +340,6 @@ class _ReportPageState extends State<ReportPage> {
             (context) => [
               pw.SizedBox(height: 20),
 
-              // Title & Date Range
               pw.Center(
                 child: pw.Text(
                   'Account Statement',
@@ -359,7 +355,6 @@ class _ReportPageState extends State<ReportPage> {
               ),
               pw.SizedBox(height: 16),
 
-              // Summary Boxes
               pw.Container(
                 decoration: pw.BoxDecoration(
                   border: pw.Border.all(color: PdfColors.grey400),
@@ -402,7 +397,6 @@ class _ReportPageState extends State<ReportPage> {
                 style: pw.TextStyle(font: font, fontSize: 10),
               ),
 
-              // Table
               pw.Container(
                 margin: const pw.EdgeInsets.only(top: 10),
                 child: pw.Table.fromTextArray(
@@ -447,7 +441,6 @@ class _ReportPageState extends State<ReportPage> {
                 ),
               ),
 
-              // Grand Total Row
               pw.Container(
                 margin: const pw.EdgeInsets.only(top: 4),
                 child: pw.Row(
@@ -644,27 +637,45 @@ class _ReportPageState extends State<ReportPage> {
   Widget buildStickyHeaderSummary() {
     return Container(
       color: Colors.white,
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       child: Row(
         children: [
-          // Total Entries (left-aligned)
+          // Total Entries
           Expanded(
-            flex: 2,
-            child: buildSummaryColumn(
-              "Total Entries",
-              "${filteredTransactions.length}",
+            flex: 4,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  "Total Entries",
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w500,
+                    color: Colors.black54,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  "${filteredTransactions.length}",
+                  style: const TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.black87,
+                  ),
+                ),
+              ],
             ),
           ),
 
-          // You Gave (right-aligned inside its flex)
+          // You Gave
           Expanded(
-            flex: 1,
+            flex: 3,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
-                Text(
+                const Text(
                   "You Gave",
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.w500,
                     color: Colors.black54,
@@ -685,16 +696,15 @@ class _ReportPageState extends State<ReportPage> {
             ),
           ),
 
-          const SizedBox(width: 24), // spacing between gave and got
-          // You Got (right-aligned inside its flex)
+          // You Got
           Expanded(
-            flex: 1,
+            flex: 3,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
-                Text(
+                const Text(
                   "You Got",
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.w500,
                     color: Colors.black54,
@@ -742,9 +752,7 @@ class _ReportPageState extends State<ReportPage> {
   Widget buildTransactionList() {
     if (isLoading) {
       return const Center(
-        child: CircularProgressIndicator(
-          color: Color(0xFF468585), // 👈 your custom color
-        ),
+        child: CircularProgressIndicator(color: Color(0xFF468585)),
       );
     } else if (filteredTransactions.isEmpty) {
       return const Center(child: Text('No transactions found'));
@@ -824,48 +832,73 @@ class _ReportPageState extends State<ReportPage> {
       child: Row(
         children: [
           Expanded(
-            child: TextField(
-              onChanged: updateSearchQuery,
-              decoration: InputDecoration(
-                hintText: 'Search Customer',
-                prefixIcon: const Icon(Icons.search),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide.none,
+            child: Material(
+              elevation: 1,
+              borderRadius: BorderRadius.circular(12),
+              child: TextField(
+                onChanged: updateSearchQuery,
+                decoration: InputDecoration(
+                  hintText: 'Search Customer',
+                  prefixIcon: const Icon(Icons.search, color: Colors.grey),
+                  hintStyle: TextStyle(color: Colors.grey.shade600),
+                  filled: true,
+                  fillColor: Colors.white,
+                  contentPadding: const EdgeInsets.symmetric(
+                    vertical: 0,
+                    horizontal: 12,
+                  ),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide.none,
+                  ),
                 ),
-                filled: true,
-                fillColor: Colors.white,
               ),
             ),
           ),
-          const SizedBox(width: 8),
-          PopupMenuButton<String>(
-            tooltip: 'Sort',
-            icon: const Icon(Icons.sort, color: Colors.black54),
-            onSelected: (value) {
-              setState(() {
-                selectedFilter = value;
-                applyFilters();
-              });
-            },
-            itemBuilder:
-                (context) => const [
-                  PopupMenuItem(value: 'All', child: Text('All')),
-                  PopupMenuItem(value: 'Expense', child: Text('Expense')),
-                  PopupMenuItem(value: 'Income', child: Text('Income')),
-                  PopupMenuItem(value: 'Today', child: Text('Today')),
-                  PopupMenuItem(value: 'Last Week', child: Text('Last Week')),
-                  PopupMenuItem(value: 'Last Month', child: Text('Last Month')),
-                  PopupMenuItem(
-                    value: 'Last 3 Months',
-                    child: Text('Last 3 Months'),
-                  ),
-                  PopupMenuItem(
-                    value: 'Last 6 Months',
-                    child: Text('Last 6 Months'),
-                  ),
-                  PopupMenuItem(value: 'Last Year', child: Text('Last Year')),
-                ],
+          const SizedBox(width: 10),
+          Container(
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(12),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black12,
+                  blurRadius: 4,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+            ),
+            child: PopupMenuButton<String>(
+              tooltip: 'Sort',
+              icon: const Icon(Icons.sort, color: Colors.black54),
+              onSelected: (value) {
+                setState(() {
+                  selectedFilter = value;
+                  applyFilters();
+                });
+              },
+              itemBuilder:
+                  (context) => const [
+                    PopupMenuItem(value: 'All', child: Text('All')),
+                    PopupMenuItem(value: 'Expense', child: Text('Expense')),
+                    PopupMenuItem(value: 'Income', child: Text('Income')),
+                    PopupMenuItem(value: 'Today', child: Text('Today')),
+                    PopupMenuItem(value: 'Last Week', child: Text('Last Week')),
+                    PopupMenuItem(
+                      value: 'Last Month',
+                      child: Text('Last Month'),
+                    ),
+                    PopupMenuItem(
+                      value: 'Last 3 Months',
+                      child: Text('Last 3 Months'),
+                    ),
+                    PopupMenuItem(
+                      value: 'Last 6 Months',
+                      child: Text('Last 6 Months'),
+                    ),
+                    PopupMenuItem(value: 'Last Year', child: Text('Last Year')),
+                  ],
+            ),
           ),
         ],
       ),
