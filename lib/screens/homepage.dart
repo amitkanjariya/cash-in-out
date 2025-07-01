@@ -495,19 +495,28 @@ class CustomerTile extends StatelessWidget {
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
       child: ListTile(
         onTap: onTap,
-        leading: CircleAvatar(
-          backgroundColor: const Color(0xFF468585),
-          backgroundImage:
-              profileImageUrl.isNotEmpty ? NetworkImage(profileImageUrl) : null,
-          child:
-              profileImageUrl.isEmpty
-                  ? Text(
-                    getInitials(name),
-                    style: const TextStyle(color: Colors.white),
-                  )
-                  : null,
+        leading: Container(
+          width: 40,
+          height: 40,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            border: Border.all(color: const Color(0xFF468585), width: 2),
+          ),
+          child: CircleAvatar(
+            backgroundColor: const Color(0xFF468585),
+            backgroundImage:
+                profileImageUrl.isNotEmpty
+                    ? NetworkImage(profileImageUrl)
+                    : null,
+            child:
+                profileImageUrl.isEmpty
+                    ? Text(
+                      getInitials(name),
+                      style: const TextStyle(color: Colors.white),
+                    )
+                    : null,
+          ),
         ),
-
         title: Text(name, style: const TextStyle(fontWeight: FontWeight.w600)),
         subtitle: Text(
           buildRelativeTime(time),
