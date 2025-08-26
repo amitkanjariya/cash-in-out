@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:cashinout/screens/entry_detail_page.dart';
 import 'package:cashinout/screens/you_gave_page.dart';
 import 'package:cashinout/screens/you_got_page.dart';
@@ -5,12 +7,12 @@ import 'package:cashinout/utils/constants.dart';
 import 'package:cashinout/utils/helper.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
-import 'package:http/http.dart' as http;
-import 'dart:convert';
-import 'package:url_launcher/url_launcher.dart';
-import 'customerprofilepage.dart';
-import 'customer_report_page.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:http/http.dart' as http;
+import 'package:url_launcher/url_launcher.dart';
+
+import 'customer_report_page.dart';
+import 'customerprofilepage.dart';
 
 class CustomerDetailPage extends StatefulWidget {
   final String userId;
@@ -67,7 +69,7 @@ class _CustomerDetailPageState extends State<CustomerDetailPage> {
   Future<void> fetchCustomerDetails() async {
     try {
       final response = await http.post(
-        Uri.parse('${Constants.baseUrl}/get_customer_details.php'),
+        Uri.parse('${Constants.baseUrl}/get_customer_details'),
         body: {'user_id': widget.userId, 'customer_id': widget.customerId},
       );
       final jsonResponse = jsonDecode(response.body);
@@ -97,7 +99,7 @@ class _CustomerDetailPageState extends State<CustomerDetailPage> {
     });
     try {
       final response = await http.post(
-        Uri.parse('${Constants.baseUrl}/get_customer_transactions.php'),
+        Uri.parse('${Constants.baseUrl}/get_customer_transactions'),
         body: {'user_id': widget.userId, 'customer_id': widget.customerId},
       );
       final data = jsonDecode(response.body);

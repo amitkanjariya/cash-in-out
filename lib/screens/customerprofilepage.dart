@@ -1,10 +1,11 @@
+import 'dart:convert';
+import 'dart:io';
+
 import 'package:cashinout/utils/constants.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:image_picker/image_picker.dart';
 import 'package:http/http.dart' as http;
-import 'dart:io';
-import 'dart:convert';
+import 'package:image_picker/image_picker.dart';
 
 class CustomerProfilePage extends StatefulWidget {
   final String userId;
@@ -40,7 +41,7 @@ class _CustomerProfilePageState extends State<CustomerProfilePage> {
   Future<void> _fetchCustomerProfileData() async {
     try {
       final response = await http.post(
-        Uri.parse('${Constants.baseUrl}/get_customer_details.php'),
+        Uri.parse('${Constants.baseUrl}/get_customer_details'),
         body: {'user_id': widget.userId, 'customer_id': widget.customerId},
       );
 
@@ -89,7 +90,7 @@ class _CustomerProfilePageState extends State<CustomerProfilePage> {
   Future<void> _saveCustomerProfile() async {
     var request = http.MultipartRequest(
       'POST',
-      Uri.parse('${Constants.baseUrl}/update_customer_profile.php'),
+      Uri.parse('${Constants.baseUrl}/update_customer_profile'),
     );
     request.fields['user_id'] = widget.userId;
     request.fields['customer_id'] = widget.customerId;

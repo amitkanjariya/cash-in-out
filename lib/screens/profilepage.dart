@@ -4,9 +4,9 @@ import 'dart:io';
 import 'package:cashinout/utils/constants.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:http/http.dart' as http;
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
-import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
 class ProfilePage extends StatefulWidget {
@@ -91,19 +91,23 @@ class _ProfilePageState extends State<ProfilePage> {
   Future<void> _fetchProfileData(String phone) async {
     try {
       final response = await http.post(
-        Uri.parse('${Constants.baseUrl}/fetch_profile.php'),
+        Uri.parse('${Constants.baseUrl}/fetch_profile'),
         body: {'phone': phone},
       );
 
       final jsonResponse = json.decode(response.body);
       if (jsonResponse['success']) {
         final data = jsonResponse['data'];
+        final fetchedGender = (data['gender'] ?? '').toString().trim();
+        final fetchedState = (data['state'] ?? '').toString().trim();
+
         setState(() {
           _nameController.text = data['name'] ?? '';
           _emailController.text = data['email'] ?? '';
-          _selectedGender = data['gender'];
+          _selectedGender =
+              _genders.contains(fetchedGender) ? fetchedGender : null;
           _addressController.text = data['address'] ?? '';
-          _selectedState = data['state'];
+          _selectedState = _states.contains(fetchedState) ? fetchedState : null;
           _cityController.text = data['city'] ?? '';
           _dobController.text = data['dob'] ?? '';
           _profileImageUrl = data['profile_image'];
@@ -163,7 +167,7 @@ class _ProfilePageState extends State<ProfilePage> {
 
     var request = http.MultipartRequest(
       'POST',
-      Uri.parse('${Constants.baseUrl}/update_profile.php'),
+      Uri.parse('${Constants.baseUrl}/update_profile'),
     );
 
     request.fields['phone'] = _phone!;
@@ -217,6 +221,20 @@ class _ProfilePageState extends State<ProfilePage> {
 
   @override
   Widget build(BuildContext context) {
+    // Compute safe values for dropdowns on every build
+    final String? _genderValueSafe =
+        (() {
+          final v = (_selectedGender ?? '').trim();
+          if (v.isEmpty) return null;
+          return _genders.contains(v) ? v : null;
+        })();
+    final String? _stateValueSafe =
+        (() {
+          final v = (_selectedState ?? '').trim();
+          if (v.isEmpty) return null;
+          return _states.contains(v) ? v : null;
+        })();
+
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Color(0xFF468585),
@@ -283,13 +301,17 @@ class _ProfilePageState extends State<ProfilePage> {
               const SizedBox(height: 16),
 
               DropdownButtonFormField<String>(
-                value: _selectedGender,
+                value: _genderValueSafe,
                 decoration: const InputDecoration(
                   labelText: 'Gender',
                   border: OutlineInputBorder(),
                 ),
+                hint: const Text('Select gender'),
                 items:
                     _genders
+                        .map((g) => g.trim())
+                        .toSet()
+                        .toList()
                         .map(
                           (gender) => DropdownMenuItem(
                             value: gender,
@@ -297,7 +319,14 @@ class _ProfilePageState extends State<ProfilePage> {
                           ),
                         )
                         .toList(),
-                onChanged: (value) => setState(() => _selectedGender = value),
+                onChanged:
+                    (value) => setState(
+                      () =>
+                          _selectedGender =
+                              ((value ?? '').trim().isEmpty)
+                                  ? null
+                                  : value!.trim(),
+                    ),
               ),
               const SizedBox(height: 16),
 
@@ -311,13 +340,17 @@ class _ProfilePageState extends State<ProfilePage> {
               const SizedBox(height: 16),
 
               DropdownButtonFormField<String>(
-                value: _selectedState,
+                value: _stateValueSafe,
                 decoration: const InputDecoration(
                   labelText: 'State',
                   border: OutlineInputBorder(),
                 ),
+                hint: const Text('Select state'),
                 items:
                     _states
+                        .map((s) => s.trim())
+                        .toSet()
+                        .toList()
                         .map(
                           (state) => DropdownMenuItem(
                             value: state,
@@ -325,7 +358,14 @@ class _ProfilePageState extends State<ProfilePage> {
                           ),
                         )
                         .toList(),
-                onChanged: (value) => setState(() => _selectedState = value),
+                onChanged:
+                    (value) => setState(
+                      () =>
+                          _selectedState =
+                              ((value ?? '').trim().isEmpty)
+                                  ? null
+                                  : value!.trim(),
+                    ),
               ),
               const SizedBox(height: 16),
 

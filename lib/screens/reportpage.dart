@@ -1,15 +1,17 @@
 import 'dart:convert';
+
 import 'package:cashinout/models/transaction_model.dart';
 import 'package:cashinout/utils/constants.dart';
 import 'package:cashinout/utils/helper.dart';
 import 'package:flutter/material.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:http/http.dart' as http;
+import 'package:intl/intl.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
 import 'entryrow.dart';
-import 'package:intl/intl.dart';
 
 class ReportPage extends StatefulWidget {
   const ReportPage({super.key});
@@ -72,7 +74,7 @@ class _ReportPageState extends State<ReportPage> {
     }
 
     final userIdRes = await http.post(
-      Uri.parse('${Constants.baseUrl}/get_user_id_by_phone.php'),
+      Uri.parse('${Constants.baseUrl}/get_user_id_by_phone'),
       body: {'phone': userPhone},
     );
     final idData = jsonDecode(userIdRes.body);
@@ -89,7 +91,7 @@ class _ReportPageState extends State<ReportPage> {
 
   Future<void> fetchTransactions() async {
     final response = await http.post(
-      Uri.parse('${Constants.baseUrl}/get_transactions.php'),
+      Uri.parse('${Constants.baseUrl}/get_transactions'),
       body: {'user_id': userId},
     );
 

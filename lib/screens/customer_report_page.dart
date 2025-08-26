@@ -1,13 +1,14 @@
 import 'dart:convert';
+
+import 'package:cashinout/utils/constants.dart';
 import 'package:cashinout/utils/helper.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
-import 'package:cashinout/utils/constants.dart';
+import 'package:intl/intl.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:intl/intl.dart';
 
 class CustomerReportPage extends StatefulWidget {
   final String customerId;
@@ -107,7 +108,7 @@ class _CustomerReportPageState extends State<CustomerReportPage> {
   Future<void> fetchCustomerDetails() async {
     try {
       final response = await http.post(
-        Uri.parse('${Constants.baseUrl}/get_customer_details.php'),
+        Uri.parse('${Constants.baseUrl}/get_customer_details'),
         body: {'user_id': widget.userId, 'customer_id': widget.customerId},
       );
 
@@ -127,7 +128,7 @@ class _CustomerReportPageState extends State<CustomerReportPage> {
     setState(() => isLoading = true);
     try {
       final response = await http.post(
-        Uri.parse('${Constants.baseUrl}/get_customer_transactions.php'),
+        Uri.parse('${Constants.baseUrl}/get_customer_transactions'),
         body: {'user_id': widget.userId, 'customer_id': widget.customerId},
       );
 

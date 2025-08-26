@@ -1,15 +1,17 @@
 import 'dart:convert';
+
 import 'package:cashinout/models/transaction_model.dart';
 import 'package:cashinout/screens/profilepage.dart';
 import 'package:cashinout/utils/constants.dart';
 import 'package:cashinout/utils/helper.dart';
 import 'package:flutter/material.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
+
+import 'addcustomer_page.dart';
 import 'customerdetailpage.dart';
 import 'morepage.dart';
 import 'reportpage.dart';
-import 'addcustomer_page.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -87,7 +89,7 @@ class _CustomerListPageState extends State<CustomerListPage> {
     }
 
     final userIdRes = await http.post(
-      Uri.parse('${Constants.baseUrl}/get_user_id_by_phone.php'),
+      Uri.parse('${Constants.baseUrl}/get_user_id_by_phone'),
       body: {'phone': userPhone},
     );
     final idData = jsonDecode(userIdRes.body);
@@ -105,7 +107,7 @@ class _CustomerListPageState extends State<CustomerListPage> {
 
   Future<void> fetchTransactions() async {
     final response = await http.post(
-      Uri.parse('${Constants.baseUrl}/get_transactions.php'),
+      Uri.parse('${Constants.baseUrl}/get_transactions'),
       body: {'user_id': userId},
     );
 

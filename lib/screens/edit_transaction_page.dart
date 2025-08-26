@@ -1,7 +1,8 @@
+import 'dart:convert';
+
 import 'package:cashinout/utils/constants.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
-import 'dart:convert';
 
 class EditTransactionPage extends StatefulWidget {
   final String transactionId;
@@ -64,7 +65,7 @@ class _EditTransactionPageState extends State<EditTransactionPage> {
     }
 
     final response = await http.post(
-      Uri.parse('${Constants.baseUrl}/update_transaction.php'),
+      Uri.parse('${Constants.baseUrl}/update_transaction'),
       body: {
         'transaction_id': widget.transactionId,
         'amount': amountText,

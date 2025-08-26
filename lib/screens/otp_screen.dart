@@ -1,9 +1,11 @@
 import 'dart:async';
 import 'dart:math';
+
 import 'package:cashinout/utils/constants.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart'; // ✅ Added import
+
 import 'homepage.dart';
 
 class OTPScreen extends StatefulWidget {
@@ -105,10 +107,10 @@ class _OTPScreenState extends State<OTPScreen> {
 
   Future<void> savePhoneNumber(String phone) async {
     try {
-      print('Posting to: ${Constants.baseUrl}/login.php');
+      print('Posting to: ${Constants.baseUrl}/login');
       print('Sending phone: $phone');
       final response = await http.post(
-        Uri.parse('${Constants.baseUrl}/login.php'),
+        Uri.parse('${Constants.baseUrl}/login'),
         body: {'phone': phone},
       );
       if (response.statusCode == 200) {

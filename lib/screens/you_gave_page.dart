@@ -1,9 +1,10 @@
-import 'package:cashinout/screens/homepage.dart';
-import 'package:flutter/material.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-import 'package:http/http.dart' as http;
 import 'dart:convert';
+
+import 'package:cashinout/screens/homepage.dart';
 import 'package:cashinout/utils/constants.dart';
+import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
 
 class YouGavePage extends StatefulWidget {
   final String? name;
@@ -48,7 +49,7 @@ class _YouGavePageState extends State<YouGavePage> {
       }
 
       final response = await http.post(
-        Uri.parse('${Constants.baseUrl}/get_user_id_by_phone.php'),
+        Uri.parse('${Constants.baseUrl}/get_user_id_by_phone'),
         body: {'phone': userPhone},
       );
 
@@ -62,7 +63,7 @@ class _YouGavePageState extends State<YouGavePage> {
       // Only add customer if both name and phone are present
       if (customerPhone.isNotEmpty && customerName.isNotEmpty) {
         final customerResponse = await http.post(
-          Uri.parse('${Constants.baseUrl}/add_customer_contact.php'),
+          Uri.parse('${Constants.baseUrl}/add_customer_contact'),
           body: {
             'user_id': userId,
             'phone': customerPhone,
@@ -103,7 +104,7 @@ class _YouGavePageState extends State<YouGavePage> {
 
       // Add transaction
       final transactionResponse = await http.post(
-        Uri.parse('${Constants.baseUrl}/add_transaction.php'),
+        Uri.parse('${Constants.baseUrl}/add_transaction'),
         body: body,
       );
 

@@ -1,10 +1,12 @@
+import 'dart:convert';
+
 import 'package:cashinout/utils/constants.dart';
 import 'package:flutter/material.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-import 'profilepage.dart';
-import 'login_screen.dart';
-import 'dart:convert';
 import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
+
+import 'login_screen.dart';
+import 'profilepage.dart';
 
 class MorePage extends StatefulWidget {
   const MorePage({super.key});
@@ -31,7 +33,7 @@ class _MorePageState extends State<MorePage> {
       String? phone = prefs.getString('phone') ?? _phone;
 
       final response = await http.post(
-        Uri.parse('${Constants.baseUrl}/fetch_profile.php'),
+        Uri.parse('${Constants.baseUrl}/fetch_profile'),
         body: {'phone': phone},
       );
 
